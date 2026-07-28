@@ -45,5 +45,5 @@ description: >-
 
 ## Note
 
-Never open a pull request without an explicit developer request, per this
-environment's git safety boundaries.
+Never open a pull request without an explicit developer request, per the git
+safety boundary in `agent-harness.md` §4 and its §5 approval gates.

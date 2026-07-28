@@ -66,4 +66,5 @@ split commits is itself part of this skill, not only writing the final
 message: invoke it for any request to commit, draft, propose, preview, or
 group commits — not just the literal word "commit". Running `git add`/`git
 commit` is the final step: never run them until the developer approves the
-drafted proposal, per this environment's git safety boundaries.
+drafted proposal, per the git safety boundary in `agent-harness.md` §4 and its
+§5 approval gates.

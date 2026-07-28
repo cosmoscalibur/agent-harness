@@ -49,10 +49,16 @@ level without justifying fit.
   the safety net.
 - Fail fast on programmer invariants and genuinely unexpected states. Never
   silently absorb a bug signal.
+- Data is obligatory by default: every input, field, column, or table is
+  required unless a contract marks it optional explicitly (an optional/nullable
+  type, a documented default, a config flag). Absence of obligatory data is an
+  unexpected state — fail fast; never degrade or substitute a default for it.
 - Never fail-fast where an architectural fallback already exists (e.g. a
   defined human-escalation or default-path fallback). Degrade to the known
-  path instead. Distinguish unexpected error (fail fast) from expected domain
-  failure with a defined fallback (degrade).
+  path instead. The license to degrade is a fallback or optionality declared
+  in the contract, never inferred — the test is not "does this feel expected?"
+  but "is the optionality or fallback declared?". Distinguish unexpected error
+  (fail fast) from expected domain failure with a defined fallback (degrade).
 - Prefer a plain function over a formal pattern (factory, strategy, observer)
   unless a real, non-hypothetical variation justifies it.
 - Defensive code outweighing business logic signals over-engineering.
@@ -128,5 +134,8 @@ level without justifying fit.
   Any other omission is debt, not a default.
 - If execution diverges from the approved plan, flag it explicitly. Never
   apply silently.
+- Assert the anti-patterns the `review` skill checks are absent, rather than
+  leaving them for review to catch: no new `noqa`/lint suppression, no silent
+  drop of required data, no speculative parameter or option added "for later".
 - At task close: plan approved, types/tests/docs consistent and current. Any
   gap is declared debt, not omitted.

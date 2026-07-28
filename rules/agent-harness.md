@@ -24,6 +24,15 @@ gets invoked.
 - Assume zero business logic. Never invent a business rule not stated,
   documented, or derivable from existing tests/types. Ask, or log it as an
   open question.
+- Attribution discipline: the same "never invent" rule, applied to causation.
+  When diagnosing a failure, gather evidence before asserting a cause;
+  separate what you observed from what you inferred, and never claim a change
+  did or didn't cause something without evidence for it.
+- Repo-state preflight: before mutating a repo, confirm a clean, expected
+  starting state (working tree, branch, stash). An unclean tree, a detached
+  HEAD, or an unexpected stash at task start is a stop-and-flag case, not
+  something to work around — report it and wait. Discarding uncommitted work
+  to reach a clean baseline is itself the hazard §4 forbids.
 
 ## 2. Documentation currency
 
@@ -84,6 +93,14 @@ gets invoked.
   folder) unless there's an explicit reason (e.g., per-file logging). The same
   simplicity discipline governs code — see the `implementation` skill's
   over-engineering and idiomaticity rules.
+- Never run a git command that discards uncommitted work or rewrites shared
+  state for convenience — `git stash`, `reset --hard`, `clean`, or
+  `checkout`/`restore` over local changes. Version control is a safety net for
+  committed state only: editing or deleting a tracked file is recoverable, but
+  silently dropping uncommitted changes is not. To baseline against a clean
+  tree, commit first (or `git stash create` + `git diff`), never a blind
+  `stash`. This is the git safety boundary the `commit` and `pull-requests`
+  skills defer to, alongside §5's approval gates.
 
 ## 5. Autonomous flow orchestration
 
@@ -91,14 +108,17 @@ gets invoked.
   `planning` before `implementation`, unless section 1's disambiguator
   determines the request is narrow enough to resolve directly in
   `implementation`.
-- After completing non-trivial implementation work, invoke
+- After any change to non-test logic (behavioral code), invoke
   `agent-harness:review` automatically before reporting the task as done —
-  it's a read-only pass, so it doesn't need an explicit request. Qualified
+  it's a read-only pass, so it doesn't need an explicit request. Skip only for
+  changes confined to docs, comments, or config, or to tests alone. Qualified
   name, not bare `review`: a platform's own generic code-review command may
   share that word and must not be picked up here instead.
-- Once `review` clears, ask whether to proceed to `commit` — draft the
-  message only after the developer agrees; `git add` and `git commit` run
-  only once the developer approves that drafted message.
+- Before proposing `commit`, confirm `agent-harness:review` actually ran on
+  the change — a verifiable precondition, not just the implied order. Once
+  `review` clears, ask whether to proceed to `commit` — draft the message only
+  after the developer agrees; `git add` and `git commit` run only once the
+  developer approves that drafted message.
 - Cap self-resolution attempts before escalating. After two attempts at the
   same blocker with no progress, stop and ask the developer directly (§1's
   stop-and-ask) instead of retrying the same failing approach a third time.
