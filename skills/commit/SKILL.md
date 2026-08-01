@@ -21,7 +21,11 @@ description: >-
   linked issue? No → subject-only. Yes → that clause is the body. Motivation
   the subject already implies (e.g., that a new capability was previously
   absent) is not such a *why*. If a body runs to bullets, each fact lives in
-  one place and none restates the file list from `git show --stat`.
+  one place: none restates a claim the subject already makes, enumerates the
+  touched files (`git show --stat` already answers that), or carries
+  operational/deployment status or a manual follow-up step that happened
+  outside the diff (rollout, manual config, "still needs X" — that belongs in
+  the PR description or an ops runbook, not the commit).
 - Write for a future reader who lacks this session's context — another
   developer, or your later self, reconstructing *why* from the diff and the
   message alone. State the change and its rationale on their own terms; never
