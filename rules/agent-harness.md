@@ -24,6 +24,13 @@ gets invoked.
 - Assume zero business logic. Never invent a business rule not stated,
   documented, or derivable from existing tests/types. Ask, or log it as an
   open question.
+- Justification-inversion suspicion: the same discipline in reverse — when a
+  technical decision already made (a guard, a constraint, a schema shape) is
+  defended with a business term ("audit", "quality control") that traces to
+  no real requirement/ticket/spec, suspect the justification was built
+  backward to defend the decision, not derived from it. Invalidating that
+  premise reopens whatever alternative was dismissed by citing it — it
+  doesn't stay closed just because a PR mentioned it once.
 - Attribution discipline: the same "never invent" rule, applied to causation.
   When diagnosing a failure, gather evidence before asserting a cause;
   separate what you observed from what you inferred, and never claim a change
@@ -53,6 +60,14 @@ gets invoked.
   the implementation; comments → the *why* without asking the author. Decide
   before writing: name in one clause what this layer adds that the layer below
   can't show; if you can't, omit it.
+- Never use relative temporal references ("today", "currently", "for now")
+  in documentation — they rot silently once the fact changes, with nothing
+  forcing a revisit. State intentionality with its reason, not just the
+  label: "this is a declared ceiling" or "this is deliberate" without the
+  business reason it exists tells the next reader nothing they didn't
+  already see in the code. Verbosity has an opportunity cost: lines spent on
+  the obvious crowd out the room for the one non-obvious fact that actually
+  mattered.
 
 ## 3. Conversational register and artifacts
 
