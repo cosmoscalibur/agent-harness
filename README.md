@@ -124,6 +124,8 @@ structure, versioning, and cross-tool references.
 | `review`          | Own                                                             | MIT     | Runs standard, adversarial, over-engineering, and performance review passes; auto-invoked after `implementation`.                                                           |
 | `commit`          | Own                                                             | MIT     | Governs commit message structure and file grouping; never runs without an explicit developer request.                                                                       |
 | `pull-requests`   | Own                                                             | MIT     | Governs PR title/body conventions; never runs without an explicit developer request.                                                                                        |
+| `cosmoscalibur-review` | Own                                                         | MIT     | @cosmoscalibur's personal code-review heuristics, stack-agnostic; a supplementary pass after `review`.                                                                      |
+| `django-review`   | Own                                                             | MIT     | Django/DRF-specific review conventions (ORM patterns, DRF exception handling, field nullability); a supplementary pass after `cosmoscalibur-review` on Django repos.        |
 
 See [`docs/rules-and-skills.md`](docs/rules-and-skills.md) for the skill
 authoring format and how Claude Code deploys rules and skills.

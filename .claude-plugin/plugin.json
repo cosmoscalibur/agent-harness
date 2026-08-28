@@ -1,6 +1,6 @@
 {
   "name": "agent-harness",
   "description": "Agent readiness evaluation, a global behavioral/tooling ruleset, and stage-specific coding methodology skills (planning, implementation, review, commit, pull requests) with ast-grep structural search. On Claude Code it adds bundled language servers (Python, Markdown, Bash, JS/TS, HTML/CSS, Rust), Ruff and rumdl auto-format hooks, and MCP servers (chrome-devtools, notion).",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "dependencies": [{ "name": "chrome-devtools-mcp", "marketplace": "claude-plugins-official" }]
 }
