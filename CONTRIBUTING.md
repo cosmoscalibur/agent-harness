@@ -11,9 +11,9 @@ covers project structure, versioning, and cross-tool reference material.
   session start), leaving the user's own `~/.claude/CLAUDE.md` untouched — it
   removes only a legacy copy of this ruleset previously installed there (a
   `CLAUDE.md` whose heading is the ruleset title).
-- `skills/<name>/SKILL.md` — the stage skills (planning, implementation, review,
-  commit, pull-requests) plus the agent-readiness, ast-grep,
-  cosmoscalibur-review, and django-review skills.
+- `skills/<name>/SKILL.md` — the stage skills (planning, implementation,
+  review, product-review, perf-review, commit, pull-requests) plus the
+  agent-readiness, ast-grep, and django-review skills.
 - `hooks/` — bundled Claude Code hooks (see `docs/hooks.md`). `.lsp.json` —
   bundled language servers. `.mcp.json` — bundled MCP servers. `settings.json`
   — bundled settings (git/PR attribution).

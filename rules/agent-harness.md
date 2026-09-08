@@ -2,9 +2,9 @@
 
 Detailed procedures for planning, implementation, code review, commits, and
 pull requests live in dedicated skills (`planning`, `implementation`,
-`review`, `commit`, `pull-requests`). This file holds the behavior that must
-apply regardless of which skill is active, plus the rules for when each one
-gets invoked.
+`review`, `product-review`, `perf-review`, `commit`, `pull-requests`). This
+file holds the behavior that must apply regardless of which skill is
+active, plus the rules for when each one gets invoked.
 
 ## 1. Guard duty and scope control
 
@@ -35,11 +35,28 @@ gets invoked.
   When diagnosing a failure, gather evidence before asserting a cause;
   separate what you observed from what you inferred, and never claim a change
   did or didn't cause something without evidence for it.
+- Baseline discipline: the same evidence standard, applied to the comparison
+  point. "Pre-existing" means present at the remote default branch's HEAD,
+  fetched fresh — never a prior commit on the current branch, an earlier
+  commit within the same PR/session, or stale local state. A defect
+  introduced and then resolved purely within the PR's own commits is not a
+  finding and is never narrated as one — in code comments, commit messages,
+  PR bodies, or review output. Only a defect traceable to that remote HEAD
+  is.
 - Repo-state preflight: before mutating a repo, confirm a clean, expected
   starting state (working tree, branch, stash). An unclean tree, a detached
   HEAD, or an unexpected stash at task start is a stop-and-flag case, not
   something to work around — report it and wait. Discarding uncommitted work
   to reach a clean baseline is itself the hazard §4 forbids.
+- Lint-suppression discipline: a lint/type-check suppression (`noqa`, `type:
+  ignore`, `pylint: disable`, a config-level rule disable) is never a default
+  agent action, no matter how spurious the violation looks — surface it and
+  get explicit developer justification and approval first, the same
+  approval-gate discipline as any other stop-and-flag case. This holds even
+  more when the "violation" isn't confirmed to be an active, actually-fired
+  rule: never preemptively suppress or disable a rule that hasn't been
+  verified to trigger — a common agent failure is defensive silencing of a
+  case that was never a real violation to begin with.
 
 ## 2. Documentation currency
 
@@ -68,6 +85,27 @@ gets invoked.
   already see in the code. Verbosity has an opportunity cost: lines spent on
   the obvious crowd out the room for the one non-obvious fact that actually
   mattered.
+- Documentation never narrates the development process that produced it: no
+  self-referential session language ("new finding", "confirmed with the
+  user", "live confirmation", "pending validation") in comments, docstrings,
+  commits, or PR bodies — that belongs in the conversation, never in a
+  committed artifact. The same applies to a temporary diagnostic/analysis
+  document: state the fact directly in the permanent artifact; never point to
+  the scratch document as the source of truth.
+- A comment/docstring pointing at another symbol for real, non-redundant
+  context (a related concept, a complementary function) uses the ecosystem's
+  structured cross-reference directive — Sphinx roles (`:func:`/`:class:`/
+  `:meth:`/`:data:`) or a `seealso::` directive in Python, `{@link}`/`@see` in
+  JSDoc, intra-doc links in Rustdoc — never free prose stating an equivalence
+  claim ("same as X", "see Y", "same mechanism as Z"). A structured reference
+  is tool-verified and breaks loudly if the target moves; a prose claim
+  silently rots. Where no such directive is available or warranted, state the
+  fact for this symbol on its own terms instead of comparing.
+- Each documentation layer owns only its own subject: a constant's doc states
+  what it represents, never the action of the code that consumes it (that
+  belongs in the consuming function's docstring); a dependency's
+  install/setup narrative belongs in README/CONTRIBUTING/docs, never inline
+  near the call site that uses it.
 
 ## 3. Conversational register and artifacts
 
@@ -122,13 +160,20 @@ gets invoked.
 - Non-trivial implementation work starts from an approved plan: invoke
   `planning` before `implementation`, unless section 1's disambiguator
   determines the request is narrow enough to resolve directly in
-  `implementation`.
+  `implementation`. `planning` mandatorily runs `product-review` alongside
+  it — comparing the request against order/spec documentation, requesting it
+  if none was given — never deferred or treated as optional.
 - After any change to non-test logic (behavioral code), invoke
   `agent-harness:review` automatically before reporting the task as done —
   it's a read-only pass, so it doesn't need an explicit request. Skip only for
   changes confined to docs, comments, or config, or to tests alone. Qualified
   name, not bare `review`: a platform's own generic code-review command may
   share that word and must not be picked up here instead.
+- `review` invokes `perf-review` autonomously when it surfaces a qualifying
+  performance signal (see `review`'s Additional checks) — the one
+  review-stage skill allowed to self-invoke another without waiting for a
+  developer request, since the signal it acts on is itself the evidence.
+  Absent a signal, `perf-review` runs only on explicit developer request.
 - Before proposing `commit`, confirm `agent-harness:review` actually ran on
   the change — a verifiable precondition, not just the implied order. Once
   `review` clears, ask whether to proceed to `commit` — draft the message only

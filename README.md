@@ -2,9 +2,10 @@
 
 Claude Code plugin that packages agent readiness evaluation, a global
 behavioral/tooling ruleset, and stage-specific coding methodology skills
-(planning, implementation, review, commit, pull requests) into a single global
-package. It also wires up language servers, Ruff and rumdl
-auto-format hooks, and MCP servers (chrome-devtools, notion).
+(planning, implementation, review, product-review, perf-review, commit,
+pull requests) into a single global package. It also wires up language
+servers, Ruff and rumdl auto-format hooks, and MCP servers (chrome-devtools,
+notion).
 
 The CLI tools and language servers below are prerequisites — install them
 first, then install the harness itself ([Installation](#installation)). The
@@ -119,13 +120,14 @@ structure, versioning, and cross-tool references.
 | ----------------- | --------------------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `agent-readiness` | [Factory AI](https://www.factory.ai/agent-readiness)            | MIT     | Scores a repository's readiness for autonomous AI agent development across 9 pillars with a phased plan; adapted from Factory AI's framework to modern tooling conventions. |
 | `ast-grep`        | [ast-grep/agent-skill](https://github.com/ast-grep/agent-skill) | MIT     | Guides structural, AST-based code search and rule authoring; used as-is, no adaptation.                                                                                     |
-| `planning`        | Own                                                             | MIT     | Produces the pre-implementation plan: scope, design decisions, and which of them need developer approval vs. autonomous resolution.                                         |
+| `planning`        | Own                                                             | MIT     | Produces the pre-implementation plan: scope, design decisions, and which of them need developer approval vs. autonomous resolution; mandatorily pairs with `product-review`. |
 | `implementation`  | Own                                                             | MIT     | Governs how code gets written against an approved plan: paradigm choice, over-engineering discipline, idiomaticity, verbosity, and the task completion checklist.           |
-| `review`          | Own                                                             | MIT     | Runs standard, adversarial, over-engineering, and performance review passes; auto-invoked after `implementation`.                                                           |
+| `review`          | Own                                                             | MIT     | Runs standard, adversarial, and over-engineering review passes, language-agnostic; auto-invoked after `implementation`; invokes `perf-review` autonomously on a performance signal. |
+| `product-review`  | Own                                                             | MIT     | Reviews a change against product/spec intent and business-practical edge cases, language-agnostic; mandatory alongside `planning`, requests spec documentation when none was given. |
+| `perf-review`     | Own                                                             | MIT     | Performance-focused review pass (complexity, N+1 queries, allocations, blocking calls), language-agnostic; not run by default — invoked by `review` on a signal, or on explicit request. |
 | `commit`          | Own                                                             | MIT     | Governs commit message structure and file grouping; never runs without an explicit developer request.                                                                       |
 | `pull-requests`   | Own                                                             | MIT     | Governs PR title/body conventions; never runs without an explicit developer request.                                                                                        |
-| `cosmoscalibur-review` | Own                                                         | MIT     | @cosmoscalibur's personal code-review heuristics, stack-agnostic; a supplementary pass after `review`.                                                                      |
-| `django-review`   | Own                                                             | MIT     | Django/DRF-specific review conventions (ORM patterns, DRF exception handling, field nullability); a supplementary pass after `cosmoscalibur-review` on Django repos.        |
+| `django-review`   | Own                                                             | MIT     | Django/DRF-specific review conventions (ORM patterns, DRF exception handling, field nullability); a supplementary pass after `review` on Django repos.                  |
 
 See [`docs/rules-and-skills.md`](docs/rules-and-skills.md) for the skill
 authoring format and how Claude Code deploys rules and skills.
@@ -160,9 +162,10 @@ repos created from a specific template. This avoids:
 
 Cross-cutting agent context (doc references, readiness triggers, behavioral
 directives, and skill orchestration) is consolidated into a single globally
-available `agent-harness.md` rule. Stage-specific procedures (planning, implementation,
-review, commit, pull requests) live in their own skills so they load only when
-relevant, instead of being always-on.
+available `agent-harness.md` rule. Stage-specific procedures (planning,
+implementation, review, product-review, perf-review, commit, pull requests)
+live in their own skills so they load only when relevant, instead of being
+always-on.
 
 ### `review` vs. a platform's own code-review command
 
@@ -170,9 +173,12 @@ Claude Code (and possibly other clients) may ship its own generic code-review
 capability (e.g. a `/code-review` command with low/medium/high/max/ultra effort
 levels, `--fix`, `--comment`). Its description overlaps with this plugin's own
 `review` skill — both review "the current diff" — so an ambiguous, unnamed
-request ("review this") could resolve to either. There's no structural
-precedence between skills from different plugins/platforms; resolution is driven
-by how each is named or described, not by a priority setting.
+request ("review this") could resolve to either, even though the two names
+aren't identical: the collision is in what each does, not just what each is
+called, and that's true of any plugin skill whose name or description echoes
+a platform built-in, not only this one. There's no structural precedence
+between skills from different plugins/platforms; resolution is driven by how
+each is named or described, not by a priority setting.
 
 Two mitigations, at the two points this plugin controls:
 
@@ -181,6 +187,7 @@ Two mitigations, at the two points this plugin controls:
   that call site is deterministic regardless of what else is installed.
 - For any other request, name the skill explicitly at the console:
   `/agent-harness:review` forces this plugin's methodology-specific pass
-  (adversarial/over-engineering/performance passes against this repo's own
-  rules); `/code-review` forces the platform's generic, effort-scaled one.
-  Explicit naming always wins over an unnamed, ambiguous ask.
+  (adversarial/over-engineering passes against this repo's own rules, plus
+  autonomously invoking `perf-review` on a signal); `/code-review` forces the
+  platform's generic, effort-scaled one. Explicit naming always wins over an
+  unnamed, ambiguous ask.

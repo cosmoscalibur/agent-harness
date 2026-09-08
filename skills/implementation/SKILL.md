@@ -63,6 +63,16 @@ level without justifying fit.
   unless a real, non-hypothetical variation justifies it.
 - Defensive code outweighing business logic signals over-engineering.
   Reassess.
+- Default to the least restrictive visibility the actual consumer set
+  requires — don't prefix a name private (`_foo`, a leading underscore, a
+  non-exported symbol) as a default habit "for cleanliness" absent a real
+  encapsulation need. In Python this is self-defeating: `_foo`/`__foo` can't
+  be enforced language-side, and a linter's protected-access check (e.g. ruff
+  `SLF001`) fires the moment a test or sibling module needs legitimate
+  access. Needing cross-module/test access to a "private" name is the
+  evidence the visibility choice is wrong — fix the visibility; don't reach
+  for a suppression (`agent-harness.md` §1's lint-suppression discipline
+  governs that decision either way).
 - Deletion beats addition: prefer removing code to adding code when both fix
   the problem.
 - The diff floor is code plus the types/tests/docs required by the
@@ -110,6 +120,20 @@ level without justifying fit.
 - This governs form, not quantity — see over-engineering above for how much
   structure is justified.
 
+## Naming
+
+- A name states what it represents (the noun), not only what happens to it
+  (the verb) — `read_log_stats`, not `run_history`, for something that reads
+  and summarizes a log. A generic verb (`run`, `process`, `handle`, `manage`,
+  `do`) attached for its own sake, with no domain noun naming what is
+  produced or represented, is a naming defect, not a style choice.
+- Prefer the compound noun that names the distinguishing part over a
+  shorter, generic one that elides it (`invoice_total`, not `total`, in a
+  module that handles more than invoices).
+- A name must be resolvable from itself and its immediate signature —
+  needing the docstring or implementation to know what it holds or does is
+  the name failing its job.
+
 ## Verbosity
 
 - Documentation follows `agent-harness.md` §2's omission gate: before writing a
@@ -118,8 +142,6 @@ level without justifying fit.
   non-obvious part; if you can't name it, don't write it. So: no comment
   restating what the code says (e.g., listing the elements of a named list
   being iterated), and no docstring paraphrasing the function name.
-- Keep names clear and concise, per the language's and codebase's own
-  convention.
 
 ## Completion checklist
 
@@ -135,7 +157,15 @@ level without justifying fit.
 - If execution diverges from the approved plan, flag it explicitly. Never
   apply silently.
 - Assert the anti-patterns the `review` skill checks are absent, rather than
-  leaving them for review to catch: no new `noqa`/lint suppression, no silent
-  drop of required data, no speculative parameter or option added "for later".
+  leaving them for review to catch: no new `noqa`/lint suppression
+  (`agent-harness.md` §1's lint-suppression discipline — the same rule, not a
+  separate one for this checklist), no silent drop of required data, no
+  speculative parameter or option added "for later".
+- A placeholder/stub implementation is legitimate only when the developer
+  explicitly asked for staged/scaffolding delivery — never a silent
+  stand-in for unfinished work behind code that otherwise reads as
+  complete. Mark it so it can't be missed (`raise NotImplementedError`, a
+  failing/skipped test with a reason, or an explicit tracked TODO) — not
+  only a docstring aside a reader can skip past.
 - At task close: plan approved, types/tests/docs consistent and current. Any
   gap is declared debt, not omitted.

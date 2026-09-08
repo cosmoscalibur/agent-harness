@@ -1,131 +1,149 @@
 ---
 name: django-review
 description: >-
-  Convenciones de code review para proyectos Django/DRF — manejo de
-  excepciones por defecto de DRF, patrones de ORM (filtros, select_related/
-  only), restricciones de base de datos, nulabilidad de campos, imports, y
-  tests que prueban configuración de admin en vez de lógica propia. Los
-  nombres de modelos/servicios en los ejemplos están generalizados para
-  aplicar a cualquier proyecto Django, no a un repo puntual. Complementa
-  `cosmoscalibur-review` (estilo personal, independiente de stack) — corre
-  esta pasada después de esa cuando el repo sea Django/DRF.
+  Code-review conventions for Django/DRF projects — DRF's default exception
+  handling, ORM patterns (filters, select_related/only), database
+  constraints, field nullability, imports, and tests that exercise admin
+  configuration instead of actual logic. Model/service names in the examples
+  are generalized to apply to any Django project, not a specific repo.
+  Complements `review` (language-agnostic) — run this pass after that one
+  when the repo is Django/DRF.
 ---
 
-# Code Review — convenciones Django/DRF
+# Code Review — Django/DRF conventions
 
-Estas reglas nacieron de revisiones reales sobre backends Django/DRF en
-producción. Úsalas **después** de `review` y `cosmoscalibur-review` — esta es
-la capa de convenciones específicas del framework/ORM, no un reemplazo de las
-pasadas de corrección/rendimiento/adversarial ni del criterio general de
-estilo.
+Use these **after** `review` — this is the framework/ORM-specific
+convention layer, not a replacement for the correctness/adversarial passes or
+the general language-agnostic criteria.
 
-## Reglas
+## Rules
 
-- **Antes de aceptar manejo de excepciones manual en una vista DRF, verifica
-  qué hace el manejador por defecto.** Si el proyecto no tiene
-  `EXCEPTION_HANDLER` custom en `REST_FRAMEWORK` (settings), cualquier
-  `rest_framework.exceptions.ValidationError`/`ParseError`/etc. no atrapada
-  ya se convierte sola en la respuesta 4xx correcta con `.detail` como body.
-  Un `try/except ValidationError: return Response(error.detail, status=400)`
-  agregado "para que el contrato se lea en el endpoint" no cambia nada
-  observable — es código muerto que reimplementa gratis lo que DRF ya hace.
-  Antes de aprobar manejo de excepciones nuevo en una vista, confirma que
-  produce algo distinto de lo que pasaría sin él.
+- **Before accepting manual exception handling in a DRF view, check what the
+  default handler does.** If the project has no custom `EXCEPTION_HANDLER` in
+  `REST_FRAMEWORK` (settings), any uncaught
+  `rest_framework.exceptions.ValidationError`/`ParseError`/etc. already
+  converts on its own into the correct 4xx response with `.detail` as the
+  body. A `try/except ValidationError: return Response(error.detail,
+  status=400)` added "so the contract reads in the endpoint" changes nothing
+  observable — it's dead code reimplementing for free what DRF already does.
+  Before approving new exception handling in a view, confirm it produces
+  something different from what would happen without it.
 
-- **Pasa lo que se usa, no el objeto completo — también en filtros de ORM.**
-  Ver la regla equivalente en `cosmoscalibur-review` para firmas de función;
-  el mismo patrón aparece disfrazado en un `Model.objects.filter(fk=objeto_completo)`
-  / `get_object_or_404(Model, fk=objeto_completo)`: Django acepta la
-  instancia completa como comodidad, pero eso no cambia que el filtro solo
-  necesita el id — usa `fk_id=objeto.id` explícito. No lo trates como un
-  caso aparte solo porque el objeto ya lo tenías en memoria (p. ej.
-  `request.user`): pasar el objeto completo cuando el `id` basta es el mismo
-  acoplamiento innecesario, tenga la forma de un parámetro de función o de
-  un kwarg de `.filter()`/`get_object_or_404()`. A veces también esconde una
-  consulta de más (carga diferida de campos que el caller nunca
-  seleccionó).
+- **Pass what's used, not the whole object — including in ORM filters.** See
+  the equivalent rule in `review` for function signatures; the same pattern
+  shows up disguised in a
+  `Model.objects.filter(fk=full_object)`/`get_object_or_404(Model,
+  fk=full_object)`: Django accepts the full instance as a convenience, but
+  that doesn't change that the filter only needs the id — use an explicit
+  `fk_id=object.id`. Don't treat it as a special case just because the
+  object was already in memory (e.g. `request.user`): passing the whole
+  object when the `id` suffices is a real memory/time overhead versus
+  passing that id (or a couple of specific fields) directly, whether it
+  takes the shape of a function parameter or a `.filter()`/
+  `get_object_or_404()` kwarg — a fully-hydrated instance carries its whole
+  field set and internal state, not just the value actually read. This is
+  separate from how the object was originally fetched: if that retrieval
+  query has no explicit field list (no `.only()`/`.values()`), that's its
+  own performance risk — more memory, bandwidth, and time spent fetching
+  columns nobody reads — see `perf-review`'s field/relation-selection rule
+  for that half of the problem. (Django's ORM does resolve `fk=full_object`
+  by reading `full_object.pk` already in memory for a standard
+  pk-based FK — no extra query from the filter itself in the common case;
+  don't flag one unless the FK uses a non-default `to_field` that the
+  retrieval query deferred.)
 
-- **Sin consultas redundantes cuando el caller ya tiene el dato.** Ver la
-  regla equivalente en `cosmoscalibur-review`; en Django esto se ve como un
-  método interno que "re-consulta por aislamiento" un registro relacionado
-  que el caller ya cargó (p. ej. volver a traer un objeto padre dentro de un
-  servicio). Antes de aceptarlo, evalúa si el caller puede simplemente
-  ampliar su propio `.only()`/`select_related()`/`prefetch_related()` para
-  incluir los campos/relaciones que hacen falta, en vez de pagar una query
-  extra por "aislamiento entre capas".
+- **No redundant queries when the caller already has the data.** See the
+  equivalent rule in `review`; in Django this shows up as an internal method
+  that "re-queries for isolation" a related record the
+  caller already loaded (e.g. re-fetching a parent object inside a service).
+  Before accepting it, evaluate whether the caller can simply widen its own
+  `.only()`/`select_related()`/`prefetch_related()` to include the needed
+  fields/relations, instead of paying an extra query for "isolation between
+  layers".
 
-- **Una restricción de DB que el motor de producción no aplica es código
-  muerto, no documentación de intención.** Si una constraint de Django
-  (`UniqueConstraint` condicional, `CheckConstraint`, etc.) depende de una
-  capacidad que el motor de base de datos del proyecto no soporta (p. ej.
-  MySQL sin soporte para el tipo de check declarado), señálalo así
-  explícitamente — no es suficiente dejarla declarada "por si se migra a
-  Postgres" o como documentación; en la práctica no protege nada en runtime
-  y puede dar falsa confianza a quien lee el modelo.
+- **A DB constraint the production engine doesn't enforce is dead code, not
+  documented intent.** See the equivalent, generalized rule in `review`.
+  If a Django constraint (a conditional `UniqueConstraint`, a
+  `CheckConstraint`, etc.) depends on a capability the
+  project's database engine doesn't support (e.g. MySQL without support for
+  the declared check type), flag it explicitly — leaving it declared "in
+  case of a migration to Postgres" or as documentation isn't enough; in
+  practice it protects nothing at runtime and can give whoever reads the
+  model false confidence.
 
-- **Consistencia de imports dentro de un archivo nuevo.** Mezclar imports
-  absolutos y relativos en el mismo archivo nuevo es desorden introducido,
-  no legacy heredado (el relativo es remanente de Python 2; el absoluto es
-  el estándar actual). La única razón legítima para uno relativo es evitar
-  un import circular real — verifícalo antes de aceptarlo.
+- **Import consistency — absolute imports are the default for new code,
+  always.** House policy: new code defaults to absolute imports — even
+  inside an existing file that already uses relative imports elsewhere,
+  don't add a new relative import just because "that's what this file
+  already does". Matching a file's existing style isn't a valid reason to
+  make new code relative; the deviation to flag is any *new* relative
+  import, not the legacy ones already in place (don't rewrite those unless
+  the change already touches that exact line). Two legitimate exceptions,
+  and only these: a real circular import that absolute imports can't
+  resolve another way, and a same-level import to a sibling module within
+  the same app (`from .models import Foo`, `from . import views`) — the one
+  case Django's own official tutorial uses and teaches as idiomatic style.
+  A relative import that climbs into a parent or sibling package
+  (`from ..other_app import X`, `from ... import X`) is never covered by
+  that exception — it's always the more severe case: harder to follow, more
+  fragile to a module move, and can mask a real circular-import problem
+  instead of solving it.
 
-- **Tests que protegen configuración, no lógica.** Un test sobre
-  `list_display`/`Meta` del admin de Django sin reglas propias detrás
-  (ningún `get_queryset`/`save_model` custom que el test ejercite) prueba
-  que el framework funciona, no tu código.
+- **Tests that protect configuration, not logic.** See the equivalent,
+  generalized rule in `review`. A test on Django admin's
+  `list_display`/`Meta` with no custom logic behind it (no `get_queryset`/
+  `save_model` override the test exercises) proves the framework works, not
+  your code.
 
-- **Convención de nulabilidad según el tipo de campo.** Campos numéricos:
-  `null=True`; campos de texto: `blank=True`, evitando `null=True` (dos
-  estados para "vacío" — cadena vacía y `NULL` — es la inconsistencia que
-  esta convención evita).
+- **Nullability convention by field type.** Numeric fields: `null=True`;
+  text fields: `blank=True`, avoiding `null=True` (two states for "empty" —
+  an empty string and `NULL` — is the inconsistency this convention avoids).
 
-## Casos concretos
+## Concrete cases
 
-Ilustraciones de reglas generales de `cosmoscalibur-review`, tal como se
-observaron en un backend Django/DRF real (nombres de modelos/servicios
-generalizados):
+Illustrations of `review`'s general rules in Django/DRF terms
+(model/service names generalized):
 
-- **Defensividad injustificada, versión DRF.** Un `try/except DatabaseError`
-  alrededor de un side-effect que nunca ha fallado en producción, o un
-  `int(request.data[...])` casteado a `ParseError` "por si acaso" sin
-  evidencia de que el frontend (que consumes end-to-end) vaya a mandar algo
-  distinto — ver la regla de defensividad en `cosmoscalibur-review`. Caso
-  real del caveat "¿esto revienta solo o no?": al resolver dos preguntas
-  legítimas sobre defensividad excesiva en un endpoint, se borró junto con
-  ellas la única validación de rango de un año fiscal de negocio — sin
-  reemplazo, sin que nada más fallara en su lugar — reintroduciendo el bug
-  de persistir un registro para un periodo fiscal inexistente que el propio
-  autor del código había prevenido explícitamente antes. Un año fuera de
-  rango sigue siendo un entero válido para la columna: nada revienta solo.
+- **Unjustified defensiveness, DRF version.** A `try/except DatabaseError`
+  around a side effect that has never failed in production, or an
+  `int(request.data[...])` cast to `ParseError` "just in case" with no
+  evidence that the frontend (which you consume end-to-end) would ever send
+  something different — see the defensiveness rule in `review`.
+  Illustrates the caveat "does this crash on its own or not?": removing two
+  legitimately excessive defensive checks from an endpoint can also remove
+  the only range validation on a business fiscal year — with no replacement,
+  nothing else failing in its place — reintroducing the bug of persisting a
+  record for a nonexistent fiscal period that the check existed to prevent.
+  An out-of-range year is still a valid integer for the column: nothing
+  crashes on its own.
 
-- **Arquitectura primero, versión DRF.** Antes de aceptar una interfaz de
-  administración o un endpoint nuevo, pregunta si otra ya resuelve el caso
-  de uso. Antes de aceptar un mixin no visto en el repo o un
-  `http_method_names` explícito como idiom razonable, corre `ast-grep`/`grep`
-  para confirmar que es genuinamente inédito.
+- **Architecture first, DRF version.** Before accepting a new admin
+  interface or endpoint, ask whether another one already solves the use
+  case. Before accepting a mixin not seen elsewhere in the repo, or an
+  explicit `http_method_names` as a reasonable idiom, run `ast-grep`/`grep`
+  to confirm it's genuinely unprecedented.
 
-- **Rename sin auditar call sites, versión Django.** Un rename de servicio
-  con cambio de firma (de recibir la instancia de usuario a recibir solo su
-  `id`) actualizó la clase y la mayoría de sus llamadas, pero dejó una
-  pasando `self.request.user` (el objeto) en vez de `.id` dentro de una
-  función anidada — los tests unitarios no lo atraparon porque llaman al
-  método directo con el tipo correcto, y nadie lo vio hasta una segunda
-  pasada de revisión manual. Ver la regla de auditoría de call sites con LSP
-  en `cosmoscalibur-review`.
+- **Rename without auditing call sites, Django version.** A service rename
+  that changes its signature (from taking the user instance to taking just
+  its `id`) updates the class and most call sites, but leaves one passing
+  `self.request.user` (the object) instead of `.id` inside a nested
+  function. Unit tests miss it when they call the method directly with the
+  correct type — only a structural search or a second manual pass catches
+  it. See the LSP call-site audit rule in `review`.
 
-- **Justificación de negocio inventada, versión ORM.** Un `on_delete=PROTECT`
-  contra el borrado duro de un usuario que en la práctica no ocurre, cuando
-  el modelo de usuario ya tiene su propio soft-delete vía un flag
-  `is_active` — ver la regla de sospecha de justificación inventada en
-  `cosmoscalibur-review`.
+- **Invented business justification, ORM version.** An `on_delete=PROTECT`
+  against a hard user delete that in practice never happens, when the user
+  model already has its own soft-delete via an `is_active` flag — see the
+  invented-justification-suspicion rule in `review`'s justification-audit
+  pass.
 
-- **Documentación como ruido, versión Django.** `help_text` es significado
-  de negocio, no formato ni la regla que ya lo gobierna (eso vive en el
-  validador/serializer). Explicar en una vista la lógica de permisos que
-  vive en la clase de permisos es la misma falla de capa mal ubicada — ver
-  la regla de documentación-como-ruido en `cosmoscalibur-review`.
+- **Documentation as noise, Django version.** `help_text` is business
+  meaning, not format or the rule that already governs it (that lives in
+  the validator/serializer). Explaining permission logic that lives in the
+  permission class inside a view is the same misplaced-layer failure — see
+  the documentation-as-noise rule in `review`.
 
-## Formato
+## Format
 
-Igual que `review`: `<archivo>:L<línea>: <problema>. <fix>.` Clasifica cada
-hallazgo (bug, riesgo, nit, pregunta).
+Same as `review`: `<file>:L<line>: <problem>. <fix>.` Classify every finding
+(bug, risk, nit, question).

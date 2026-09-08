@@ -34,6 +34,10 @@ without explicit developer approval on the plan.
 - Frame the task as a verifiable, test-first goal: "add validation" → write
   failing tests for invalid input, then pass them. "fix bug" → reproduce with
   a test, then fix. "refactor X" → tests green before and after.
+- Invoke `product-review` alongside this skill, not after it — comparing the
+  request against order/spec documentation, and requesting that
+  documentation if none was given, is mandatory for any non-trivial change,
+  never optional or deferred to a later pass. See `product-review`.
 
 ## Handoff
 
