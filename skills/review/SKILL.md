@@ -38,6 +38,18 @@ description: >-
   traceable — missing an explicit `NotImplementedError`/failing-test marker,
   missing a TODO documenting the pending work, or — when the repo keeps a
   roadmap document — that document left unupdated.
+- Readiness feedback loop pass: if a failure or hallucination this task
+  traced to missing or poor project documentation or context boundaries
+  (README, CLAUDE.md, `docs/`), say so and recommend the specific fix,
+  unprompted — this end-of-task point is where that friction is still
+  precise enough to name, not a detail to let fade. The same applies one
+  layer up: when the friction traced to the agent's own ruleset
+  (`agent-harness.md`, a skill) or the developer's global `CLAUDE.md`
+  instead — not a fact specific to this project — saving it as project-scoped
+  memory alone isn't enough. Name the specific rule/file gap and recommend
+  the edit, in addition to (not instead of) any immediate memory note kept
+  for continuity. The test: would this same confusion recur in any project
+  using this harness? If yes, it's a harness gap, not a project fact.
 - Baseline-discipline pass: a "bug found and fixed" claim (in code comments,
   commit body, or PR description) is only valid against the remote default
   branch's HEAD (`agent-harness.md` §1's baseline discipline) — a defect
@@ -346,4 +358,25 @@ description: >-
   configuration (an admin panel's field list, a serializer's `Meta`, a
   routed URL list) with no custom logic behind it — no override the test
   actually exercises — verifies the framework, not anything this codebase
-  added. See `django-review` for the concrete Django admin case.
+  added (e.g., Django admin's `list_display`/`Meta` with no `get_queryset`/
+  `save_model` override).
+
+- **Before adding manual error handling in a request handler, check what the
+  framework's own default handler already does.** A web framework's default
+  exception-to-response mapping (DRF's `exception_handler`, Flask's error
+  handlers, FastAPI's exception handlers, Rails' `rescue_from`) already
+  converts a known exception into the correct response on its own. A
+  `try/except` added "so the contract reads in the handler" that produces
+  the exact same observable response is dead code reimplementing what the
+  framework already does for free — confirm it produces something different
+  before accepting it. See `django-review` for the concrete DRF case.
+
+- **A field shouldn't have two different representations of "no value".** If
+  a field can be both `NULL` and an empty string/collection with no distinct
+  meaning between the two, that's a modeling inconsistency waiting to
+  surface as a bug (a query that checks one but not the other, a form that
+  clears to one while a migration defaults to the other) — pick one
+  canonical representation of absence per field and enforce it. Django's own
+  convention is the concrete instance: numeric fields use `null=True`; text
+  fields use `blank=True` and avoid `null=True`, so "empty" has exactly one
+  representation instead of two.

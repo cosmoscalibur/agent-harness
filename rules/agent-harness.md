@@ -64,9 +64,6 @@ active, plus the rules for when each one gets invoked.
   isn't done until docs match code.
 - Changes to dependencies, commands, or project structure: update
   `README.md` and `CONTRIBUTING.md` (if present) same turn.
-- Readiness feedback loop: if a failure or hallucination traces to
-  missing/poor project documentation or context boundaries, say so and
-  recommend the specific fix, unprompted.
 - Documentation states only what is factual and verifiable. A stylistic
   pattern (parallel phrasing, symmetry with a sibling entry) governs form
   only — never license to assert an unverified claim. A claim false by any
@@ -135,9 +132,10 @@ active, plus the rules for when each one gets invoked.
   2. **`ast-grep`** for structural patterns when the exact spelling isn't
      known in advance (an attribute access on an unknown base, a family of
      method names): match a pattern (`$X.field`, `def visit_$NAME`) rather
-     than enumerating `grep` guesses. Reading a file in full is not a
-     substitute for a repo-wide structural search before a signature/rename
-     change.
+     than enumerating `grep` guesses. This is the general tier ordering, not
+     a restatement of the specific triggers — `implementation` and `review`
+     state those (a pre-rename call-site audit, a precedent check before
+     accepting an unusual pattern).
   3. **`grep`** for lexical matches — a single known literal, config, docs,
      log strings, TODOs. Scope by path or extension first to keep results
      concise. Not for symbol definitions unless tiers 1-2 fail.

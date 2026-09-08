@@ -3,9 +3,8 @@ name: django-review
 description: >-
   Code-review conventions for Django/DRF projects — DRF's default exception
   handling, ORM patterns (filters, select_related/only), database
-  constraints, field nullability, imports, and tests that exercise admin
-  configuration instead of actual logic. Model/service names in the examples
-  are generalized to apply to any Django project, not a specific repo.
+  constraints, and imports. Model/service names in the examples are
+  generalized to apply to any Django project, not a specific repo.
   Complements `review` (language-agnostic) — run this pass after that one
   when the repo is Django/DRF.
 ---
@@ -18,16 +17,14 @@ the general language-agnostic criteria.
 
 ## Rules
 
-- **Before accepting manual exception handling in a DRF view, check what the
-  default handler does.** If the project has no custom `EXCEPTION_HANDLER` in
+- **DRF's default exception handler.** See the equivalent, generalized rule
+  in `review`. If the project has no custom `EXCEPTION_HANDLER` in
   `REST_FRAMEWORK` (settings), any uncaught
   `rest_framework.exceptions.ValidationError`/`ParseError`/etc. already
   converts on its own into the correct 4xx response with `.detail` as the
-  body. A `try/except ValidationError: return Response(error.detail,
+  body — a `try/except ValidationError: return Response(error.detail,
   status=400)` added "so the contract reads in the endpoint" changes nothing
-  observable — it's dead code reimplementing for free what DRF already does.
-  Before approving new exception handling in a view, confirm it produces
-  something different from what would happen without it.
+  observable.
 
 - **Pass what's used, not the whole object — including in ORM filters.** See
   the equivalent rule in `review` for function signatures; the same pattern
@@ -88,16 +85,6 @@ the general language-agnostic criteria.
   that exception — it's always the more severe case: harder to follow, more
   fragile to a module move, and can mask a real circular-import problem
   instead of solving it.
-
-- **Tests that protect configuration, not logic.** See the equivalent,
-  generalized rule in `review`. A test on Django admin's
-  `list_display`/`Meta` with no custom logic behind it (no `get_queryset`/
-  `save_model` override the test exercises) proves the framework works, not
-  your code.
-
-- **Nullability convention by field type.** Numeric fields: `null=True`;
-  text fields: `blank=True`, avoiding `null=True` (two states for "empty" —
-  an empty string and `NULL` — is the inconsistency this convention avoids).
 
 ## Concrete cases
 
