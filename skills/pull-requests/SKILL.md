@@ -13,6 +13,9 @@ description: >-
 - Title: specific about scope and observable effect. No "fix bug" or "update
   logic".
 - Body: neutral, verifiable impact description. No promotional tone.
+- Never attribute the PR to an agent: no `Co-Authored-By` trailer, agent
+  signature, or generated-by note in the title, body, or the commits it
+  contains — the PR is authored by the developer who approved it.
 - Template precedence: fill the repo's PR template if present
   (`.github/pull_request_template.md`, or a template under
   `.github/PULL_REQUEST_TEMPLATE/`); else, if this skill bundles one under

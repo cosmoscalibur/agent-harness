@@ -32,6 +32,9 @@ description: >-
   reference author-side or ephemeral context: internal plan labels ("Tier 1",
   "phase 2"), the review or audit that prompted the work, chat shorthand, or
   "as discussed".
+- Never attribute the commit to an agent: omit `Co-Authored-By` trailers and
+  any other agent-signature line, even when a harness default instructs
+  appending one — the commit is authored by the developer who approved it.
 - Reference related issues/PRs at the end of the body, not inline.
 - No file spans two commits: a file's whole change set lands in exactly one
   commit, never split or partial. This is *not* "one commit per file". The unit
