@@ -62,7 +62,7 @@ Every hook script (Python stdlib, no dependencies) follows the same shape:
 read the stdin payload, take `tool_input.file_path`, return immediately unless
 it matches the target extension, then run the language's tool via `uvx`
 (fetches it from PyPI on demand, cached after first use — so `uv` is the only
-prerequisite) to fix and format the file. Both calls run with `check=False`: a
+prerequisite) to fix and format the file. Each call runs with `check=False`: a
 lint failure is swallowed rather than blocking the edit, and any violation the
 tool can't auto-fix is left for `implementation`/`review` to catch — the hook
 never surfaces it back to the agent.

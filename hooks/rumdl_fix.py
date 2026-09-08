@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
-"""PostToolUse hook: run rumdl (fix, then format) on an edited Markdown file.
+"""PostToolUse hook: run rumdl fmt on an edited Markdown file.
 
-Reads the hook payload as JSON on stdin and acts only on .md files.
+Reads the hook payload as JSON on stdin and acts only on .md files. `fmt`
+applies the same fixes as `check --fix` (they share rumdl's rule engine;
+only the exit-code convention differs) plus formatting, so a separate
+`check --fix` call first would just repeat it.
 """
 
 import json
@@ -21,8 +24,7 @@ def main() -> None:
     if not file_path or not file_path.endswith(MARKDOWN_SUFFIXES):
         return
 
-    subprocess.run(["uvx", "rumdl", "check", "--fix", "-q", file_path], check=False)
-    subprocess.run(["uvx", "rumdl", "fmt", "-q", file_path], check=False)
+    _ = subprocess.run(["uvx", "rumdl", "fmt", "-q", file_path], check=False)
 
 
 if __name__ == "__main__":

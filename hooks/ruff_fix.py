@@ -21,8 +21,8 @@ def main() -> None:
     if not file_path or not file_path.endswith(PYTHON_SUFFIXES):
         return
 
-    subprocess.run(["uvx", "ruff", "check", "--fix", "-q", file_path], check=False)
-    subprocess.run(["uvx", "ruff", "format", "-q", file_path], check=False)
+    _ = subprocess.run(["uvx", "ruff", "check", "--fix", "-q", file_path], check=False)
+    _ = subprocess.run(["uvx", "ruff", "format", "-q", file_path], check=False)
 
 
 if __name__ == "__main__":
