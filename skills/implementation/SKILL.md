@@ -66,13 +66,19 @@ level without justifying fit.
 - Default to the least restrictive visibility the actual consumer set
   requires — don't prefix a name private (`_foo`, a leading underscore, a
   non-exported symbol) as a default habit "for cleanliness" absent a real
-  encapsulation need. In Python this is self-defeating: `_foo`/`__foo` can't
-  be enforced language-side, and a linter's protected-access check (e.g. ruff
-  `SLF001`) fires the moment a test or sibling module needs legitimate
-  access. Needing cross-module/test access to a "private" name is the
-  evidence the visibility choice is wrong — fix the visibility; don't reach
-  for a suppression (`agent-harness.md` §1's lint-suppression discipline
-  governs that decision either way).
+  encapsulation need. At definition time, name in one clause what real thing
+  this symbol's privacy protects (coupling to an unstable external
+  wire-format, a business rule specific to one internal caller) — if the
+  only justification is "nothing external needs it yet," it should be
+  public. Needing cross-module/test access to a "private" name later is a
+  symptom that the visibility choice was wrong, not the test itself: don't
+  wait for that symptom to evaluate it, and don't treat its absence as proof
+  staying private is fine. In Python this is self-defeating: `_foo`/`__foo`
+  can't be enforced language-side, and a linter's protected-access check
+  (e.g. ruff `SLF001`) fires the moment a test or sibling module needs
+  legitimate access — the fix is still to correct the visibility decided
+  above, never to reach for a suppression (`agent-harness.md` §1's
+  lint-suppression discipline governs that decision either way).
 - Deletion beats addition: prefer removing code to adding code when both fix
   the problem.
 - The diff floor is code plus the types/tests/docs required by the
@@ -133,6 +139,16 @@ level without justifying fit.
 - A name must be resolvable from itself and its immediate signature —
   needing the docstring or implementation to know what it holds or does is
   the name failing its job.
+- Before naming a constant, decide whether its value is intrinsically
+  generic (reusable anywhere the same literal applies, e.g. a shared
+  `"Yes"`/`"No"` string pair) or intrinsically scoped to one business
+  domain/value set (a sentinel meaningful only within one specific
+  classification's own space). A generic value gets a generic name; a name
+  that encodes its first consumer's context, when the value itself carries
+  no dependency on that consumer, is itself the naming defect — the same
+  drift `agent-harness.md` §2 already flags in a constant's *docstring*,
+  applied to its *name*. Check whether an equivalent constant already
+  exists to reuse before introducing a new one.
 
 ## Verbosity
 
@@ -142,6 +158,14 @@ level without justifying fit.
   non-obvious part; if you can't name it, don't write it. So: no comment
   restating what the code says (e.g., listing the elements of a named list
   being iterated), and no docstring paraphrasing the function name.
+- A function's docstring leads with a verb in the indicative mood,
+  describing the action it performs ("Finds...", "Confirms...",
+  "Suspends..."), never a noun phrase describing its return value as if it
+  were a class/dataclass docstring.
+- A class/dataclass/NamedTuple docstring legitimately describes a value (a
+  noun phrase) — but names the domain noun explicitly (e.g. "The journey to
+  clone..."), never an elliptical construction that leaves it implicit (e.g.
+  "What to clone..." without stating what kind of thing "what" is).
 
 ## Completion checklist
 

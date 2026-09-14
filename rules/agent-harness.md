@@ -73,15 +73,30 @@ active, plus the rules for when each one gets invoked.
   doesn't reveal without running it; docstrings → the contract without reading
   the implementation; comments → the *why* without asking the author. Decide
   before writing: name in one clause what this layer adds that the layer below
-  can't show; if you can't, omit it.
-- Never use relative temporal references ("today", "currently", "for now")
-  in documentation — they rot silently once the fact changes, with nothing
-  forcing a revisit. State intentionality with its reason, not just the
-  label: "this is a declared ceiling" or "this is deliberate" without the
-  business reason it exists tells the next reader nothing they didn't
-  already see in the code. Verbosity has an opportunity cost: lines spent on
-  the obvious crowd out the room for the one non-obvious fact that actually
-  mattered.
+  can't show; if you can't, omit it. Apply this per line, not to the
+  comment/docstring as a whole — trimming a comment's size is not the same
+  operation as passing the gate. For each surviving line, any one of the
+  following means delete that line regardless of overall length: it's
+  verifiable just as easily in the official docs of the tool/dependency it
+  cites; the adjacent line of code already shows it; it's an obvious
+  consequence of language or formatting convention.
+- Never restate, as a hardcoded literal, a fact that rots silently once it
+  changes with nothing forcing a revisit — the same failure whether it's a
+  relative temporal reference ("today", "currently", "for now") or a count
+  fully derivable from the code (a list/tuple length, a total number of
+  fields/steps/properties): the moment the underlying list changes, the
+  restated literal drifts and nothing catches it. State the list/mechanism by
+  reference instead of repeating its current count. State intentionality with
+  its reason, not just the label: "this is a declared ceiling" or "this is
+  deliberate" without the business reason it exists tells the next reader
+  nothing they didn't already see in the code. Verbosity has an opportunity
+  cost: lines spent on the obvious crowd out the room for the one non-obvious
+  fact that actually mattered.
+- Each statement documents what the code does, never what it doesn't do or
+  doesn't need. A negative-framed sentence ("doesn't need X", "without
+  invoking Y", "doesn't redo Z") is almost always either the same fact a
+  positive sentence already states elsewhere (delete, don't rephrase), or a
+  real fact that can be stated positively instead.
 - Documentation never narrates the development process that produced it: no
   self-referential session language ("new finding", "confirmed with the
   user", "live confirmation", "pending validation") in comments, docstrings,

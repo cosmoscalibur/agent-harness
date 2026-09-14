@@ -19,6 +19,11 @@ description: >-
   naming semantics, adherence to the `implementation` skill's paradigm,
   over-engineering, declarative/procedural, idiomaticity, and verbosity
   rules.
+- Scope of every check in this skill is the diff, full stop — including code
+  the same session just produced during `implementation` minutes earlier,
+  evaluated with the same scrutiny as pre-existing or third-party code under
+  audit. Applicability isn't "code under review request," it's "any code in
+  the diff."
 - Architecture-first pass, at any level of granularity: before accepting a
   new surface (endpoint, admin, service) as necessary, check whether an
   existing one already covers the use case. Before discussing an unusual
@@ -32,12 +37,18 @@ description: >-
   one level below. Flag: self-referential process narration, a reference to a
   temporary diagnostic document instead of the fact itself, a prose
   comparison ("same as X", "see Y") where a structured cross-reference
-  directive was warranted, a constant's doc describing its consumer's action
-  instead of its own meaning, install/setup narrative that belongs in
-  README/CONTRIBUTING instead, and a placeholder/stub that isn't fully
-  traceable — missing an explicit `NotImplementedError`/failing-test marker,
-  missing a TODO documenting the pending work, or — when the repo keeps a
-  roadmap document — that document left unupdated.
+  directive was warranted, a constant's doc or name describing its
+  consumer's action or context instead of its own meaning, install/setup
+  narrative that belongs in README/CONTRIBUTING instead, a placeholder/stub
+  that isn't fully traceable — missing an explicit
+  `NotImplementedError`/failing-test marker, missing a TODO documenting the
+  pending work, or — when the repo keeps a roadmap document — that document
+  left unupdated. Also flag: a function docstring that doesn't lead with a
+  verb, a class/dataclass/NamedTuple docstring whose domain noun is left
+  implicit, a hardcoded literal restating a count or fact derivable from the
+  code (`agent-harness.md` §2), and a negative-framed sentence ("doesn't need
+  X", "without invoking Y") that's either redundant with a positive fact
+  stated elsewhere or rephrasable as one.
 - Readiness feedback loop pass: if a failure or hallucination this task
   traced to missing or poor project documentation or context boundaries
   (README, CLAUDE.md, `docs/`), say so and recommend the specific fix,
@@ -81,7 +92,11 @@ description: >-
   reformat or lint-driven pass that happens to reach a legacy symbol is the
   opportunity to clean it up, not a reason to skip it as unrelated. Includes
   unjustified privatization — a name marked private by default with no real
-  encapsulation need, per `implementation`'s over-engineering rules.
+  encapsulation need, per `implementation`'s over-engineering rules. For each
+  new `_`-prefixed symbol in the diff, the finding write-up states the real
+  encapsulation reason (or its absence) explicitly — cross-module/test
+  access to it is a symptom that can surface later, never the criterion
+  itself, so its absence doesn't clear the symbol either.
 - Performance signal → `perf-review`: performance is not reviewed by this
   pass by default. When the diff shows a qualifying signal — a query issued
   inside a loop with no batching/prefetch, a query or ORM call with no

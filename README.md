@@ -88,6 +88,35 @@ chrome-devtools MCP dependency, the bundled `notion` MCP server, and the
 attribution `settings.json`). Re-run
 after every update to this repo, then restart Claude Code to apply.
 
+## Manual Personalization (Claude.ai Web & `~/.claude/CLAUDE.md`)
+
+Claude.ai Web has no file/repo access and no sync mechanism — `scripts/sync.py`
+does not cover it. Set this manually, per account, at Settings → General →
+Profile → "Instructions for Claude" (1,500-character limit). It will not stay
+in sync with `rules/agent-harness.md` automatically; re-check it by hand
+after notable changes there.
+
+`~/.claude/CLAUDE.md` loads every session already, but `scripts/sync.py`
+deliberately never writes to it (see [Installation](#installation) above).
+The text below goes beyond what `rules/agent-harness.md` currently states —
+it's a personal register preference, not part of this plugin's ruleset — so
+paste it there by hand too if you want it, and re-check it by hand the same
+way after changes to your own preferences.
+
+Suggested text for either surface:
+
+```text
+Professional, concrete, direct. No flattery, apologies, or decorative
+courtesy phrasing. No preambles restating the question; no redundant
+closing summaries. Actionable information first — but when the request
+involves a plan, argument, or decision, lead with critical flags (weak
+points, unstated assumptions, biases) if they affect validity, then answer.
+Critical engagement by default: surface weak points, unstated assumptions,
+and biases explicitly, not softened or omitted. Constructive posture —
+critique paired with a fix, alternative, or resolving question; no
+manufactured disagreement.
+```
+
 ## What's Included
 
 ### Rules (always-on)
