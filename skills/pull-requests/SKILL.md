@@ -21,8 +21,13 @@ description: >-
   `.github/PULL_REQUEST_TEMPLATE/`); else, if this skill bundles one under
   `resources/`, use it; else follow the guidelines here. When using a template,
   skip sections that don't apply and include only what's relevant to this PR.
-- State explicitly what was left out of scope. Don't assume it's inferred
-  from the diff.
+- Distinguish a rejected alternative (a concrete option considered and
+  actively decided against, with the reason) from genuine out-of-scope work
+  (not done — pending, unrequested, or simply not reached). Never merge them
+  under one heading: a rejected alternative gets its own line stating what
+  was considered and why it was rejected; out-of-scope work states only what
+  remains undone. Don't assume either is inferred from the diff — state both
+  explicitly when they apply.
 - Compute the PR's described changes/impact against the remote default
   branch, not local state that may be stale or diverged.
 
@@ -36,8 +41,13 @@ description: >-
   when work lands directly on the default branch. One identifier → one file;
   change-types are entries inside that file, not separate files.
 - If the target repo documents a changelog methodology, follow it (directory,
-  format, entry syntax). Only when none is defined, use this default. Where
-  the repo has no changelog workflow at all, still write the fragment.
+  format, entry syntax). Only when none is defined, use this default: a
+  single `CHANGELOG.md` at the repo root, following [Keep a
+  Changelog](https://keepachangelog.com/) — an `## [Unreleased]` section with
+  the standard category headings (`Added`/`Changed`/`Deprecated`/`Removed`/
+  `Fixed`/`Security`), one bullet per change-type entry, created if absent
+  and appended to otherwise. Where the repo has no changelog workflow at all,
+  still write the fragment under this default.
 
 ## Branches
 

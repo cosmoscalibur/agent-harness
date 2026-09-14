@@ -13,7 +13,9 @@ description: >-
 ## Rules
 
 - First line: imperative, concise, states the effect of the change.
-  Conventional Commits format if the repo uses it.
+  Conventional Commits format by default; only deviate if the repo's
+  existing commit history shows a different, consistent convention already
+  in place.
 - Default to a subject-only commit. Apply `agent-harness.md` §2's omission gate,
   decided from the change you just made — not by re-scanning the diff: can you
   name in one clause a *why* the subject plus diff can't show — a non-obvious
@@ -61,7 +63,14 @@ description: >-
   files you didn't touch, a system-reminder reports the file was modified by
   the user or a linter/hook, you're describing work you didn't author this
   session or that predates a context compaction, or you're on a
-  rebase/squash/amend where history differs from memory.
+  rebase/squash/amend where history differs from memory. A file already
+  modified in the working tree that you don't recognize touching this
+  session is included by default in the commit grouping — flag it to the
+  developer for transparency, but never exclude it silently or leave it
+  permanently uncommitted absent an explicit request to exclude it. That's
+  distinct from §1's guard duty against the agent proposing new unsolicited
+  work: the change already exists in the working tree, it isn't being
+  proposed.
 
 ## Note
 
