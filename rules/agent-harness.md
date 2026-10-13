@@ -24,6 +24,18 @@ active, plus the rules for when each one gets invoked.
 - Assume zero business logic. Never invent a business rule not stated,
   documented, or derivable from existing tests/types. Ask, or log it as an
   open question.
+- Requirement persistence: a compaction summary is lossy, and a requirement
+  that survives one as a paraphrase reads as settled with nothing left to
+  check it against. On any task long enough to risk compaction, keep the
+  developer's stated requirements, decisions, and corrections — quoted
+  verbatim, a superseded one marked superseded rather than silently
+  dropped — and the live plan, updated as it changes, in
+  `.agent-harness/notes.md` at the repo root. Exclude it in the repo's local
+  `.git/info/exclude`, never in the project's `.gitignore`; it is never
+  committed. After a compaction, this file — not the summary — is the record
+  of what was asked. A recorded claim about the codebase itself ("X doesn't
+  support Y") is not a requirement: note where it was verified, and re-verify
+  it against the code before new work depends on it.
 - Justification-inversion suspicion: the same discipline in reverse — when a
   technical decision already made (a guard, a constraint, a schema shape) is
   defended with a business term ("audit", "quality control") that traces to
@@ -117,7 +129,16 @@ active, plus the rules for when each one gets invoked.
   what it represents, never the action of the code that consumes it (that
   belongs in the consuming function's docstring); a dependency's
   install/setup narrative belongs in README/CONTRIBUTING/docs, never inline
-  near the call site that uses it.
+  near the call site that uses it. The same holds for a reusable
+  design-pattern justification (a query idiom, a defensive-coding trade-off,
+  a naming rule) that applies across call sites: it lives once in the
+  project's conventions document — find the existing one (a `docs/`
+  architecture/conventions page, a `CONTRIBUTING.md` section) and add it
+  there if the pattern isn't documented yet. A call site then states only
+  what is specific to it, never re-justifies the general rule. This is a
+  different failure from process narration: a design justification is
+  legitimate content in the wrong layer (relocate it), session narration is
+  not content at all (delete it).
 
 ## 3. Conversational register and artifacts
 
@@ -167,6 +188,15 @@ active, plus the rules for when each one gets invoked.
   tree, commit first (or `git stash create` + `git diff`), never a blind
   `stash`. This is the git safety boundary the `commit` and `pull-requests`
   skills defer to, alongside §5's approval gates.
+- A container that bind-mounts the working tree mounts it read-only (`:ro`)
+  unless the command must write into it. If it must, run it as the host user
+  (Docker: `--user "$(id -u):$(id -g)"`; rootless Podman already maps
+  container root to the host user) — a root-owned artifact (`__pycache__/`,
+  a lint cache, build output) is git-ignored, so it never surfaces in
+  `git status`, yet the developer can't delete it and it can break the next
+  build. Give each container a unique name, or let the engine assign one,
+  whenever another invocation may run concurrently, so one task's
+  `rm -f <name>` can't remove another task's container.
 
 ## 5. Autonomous flow orchestration
 
@@ -181,7 +211,15 @@ active, plus the rules for when each one gets invoked.
   it's a read-only pass, so it doesn't need an explicit request. Skip only for
   changes confined to docs, comments, or config, or to tests alone. Qualified
   name, not bare `review`: a platform's own generic code-review command may
-  share that word and must not be picked up here instead.
+  share that word and must not be picked up here instead. When the diff was
+  authored in this same session, run the review in a separate subagent
+  (`Agent` tool) with a fresh context — pass it the diff range, the
+  `.agent-harness/notes.md` path when it exists, and the instruction to
+  invoke `agent-harness:review`, never the authoring rationale. An inline
+  review inherits the context that produced the code and shares its blind
+  spots; a `perf-review` triggered from the isolated pass runs inside the
+  same subagent and inherits its isolation. A diff authored outside the
+  session is already independent and needs no subagent.
 - `review` invokes `perf-review` autonomously when it surfaces a qualifying
   performance signal (see `review`'s Additional checks) — the one
   review-stage skill allowed to self-invoke another without waiting for a

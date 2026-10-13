@@ -7,6 +7,9 @@ This plugin ships hooks on Claude Code only, declared in
   see [Script pattern](#script-pattern) for the current set.
 - A `SessionStart` hook that injects context at session start — see
   [Session-start LSP hint](#session-start-lsp-hint).
+- A `SessionStart` hook, matched on `compact`, that re-injects the task notes
+  file after a context compaction — see
+  [Post-compaction notes re-injection](#post-compaction-notes-re-injection).
 
 ## Why a hook and not a second LSP
 
@@ -97,3 +100,19 @@ first call. Injecting the directive at session start raises the salience of
 that step and reinforces the tier order in `rules/agent-harness.md` section 4.
 It is a nudge, not a guarantee — the hook cannot call `ToolSearch` itself; the
 model still has to act on the directive.
+
+## Post-compaction notes re-injection
+
+The second `SessionStart` entry uses `matcher: "compact"`, so it fires only when
+a session resumes after a context compaction (the other `SessionStart` sources
+are `startup`, `resume`, and `clear`). It runs
+[`hooks/notes_reinject.py`](../hooks/notes_reinject.py), which reads the
+payload's `cwd`, and when `.agent-harness/notes.md` exists there, emits its
+contents as `hookSpecificOutput.additionalContext`. With no notes file it
+prints nothing and the session continues unchanged.
+
+The notes file is the requirement-persistence record defined in
+`rules/agent-harness.md` section 1: the developer's verbatim requirements and
+decisions plus the live plan, kept outside chat history and excluded through
+`.git/info/exclude`. Re-injecting it puts the lossless record next to the lossy
+compaction summary instead of relying on the agent to re-read the file.

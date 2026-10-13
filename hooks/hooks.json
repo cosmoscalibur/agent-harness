@@ -8,6 +8,15 @@
             "command": "printf %s '{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"At session start, before any code-symbol search, load the LSP tool schema with ToolSearch (select:LSP). Prefer LSP (goToDefinition/findReferences) over grep for symbols; see rules/agent-harness.md section 4.\"}}'"
           }
         ]
+      },
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --no-project \"${CLAUDE_PLUGIN_ROOT}/hooks/notes_reinject.py\""
+          }
+        ]
       }
     ],
     "PostToolUse": [

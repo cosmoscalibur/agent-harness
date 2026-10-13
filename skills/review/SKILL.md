@@ -23,7 +23,8 @@ description: >-
   the same session just produced during `implementation` minutes earlier,
   evaluated with the same scrutiny as pre-existing or third-party code under
   audit. Applicability isn't "code under review request," it's "any code in
-  the diff."
+  the diff." Same-session code is reviewed from an isolated subagent, not
+  inline (`agent-harness.md` §5).
 - Architecture-first pass, at any level of granularity: before accepting a
   new surface (endpoint, admin, service) as necessary, check whether an
   existing one already covers the use case. Before discussing an unusual
@@ -39,7 +40,9 @@ description: >-
   comparison ("same as X", "see Y") where a structured cross-reference
   directive was warranted, a constant's doc or name describing its
   consumer's action or context instead of its own meaning, install/setup
-  narrative that belongs in README/CONTRIBUTING instead, a placeholder/stub
+  narrative that belongs in README/CONTRIBUTING instead, a reusable
+  design-pattern justification restated at a call site instead of documented
+  once in the project's conventions document, a placeholder/stub
   that isn't fully traceable — missing an explicit
   `NotImplementedError`/failing-test marker, missing a TODO documenting the
   pending work, or — when the repo keeps a roadmap document — that document
@@ -98,16 +101,24 @@ description: >-
   access to it is a symptom that can surface later, never the criterion
   itself, so its absence doesn't clear the symbol either.
 - Performance signal → `perf-review`: performance is not reviewed by this
-  pass by default. When the diff shows a qualifying signal — a query issued
-  inside a loop with no batching/prefetch, a query or ORM call with no
-  explicit field/relation selection at all (risk of over-fetching now, or an
-  N+1 the moment a lazy relation gets touched later — the absence of an
-  explicit list is the signal, not just the loop case), a bulk/batch
-  endpoint, an unbounded collection materialized in memory, a blocking call
-  on a path already known to be hot, or a query on a likely-hot/large-table
-  path with no evident supporting index — invoke `perf-review` autonomously
-  and note in the report that the signal triggered it. Absent such a signal,
-  don't invoke or recommend it speculatively.
+  pass by default. Any one of these signals in the diff qualifies:
+  1. A query issued inside a loop with no batching/prefetch.
+  2. A query or ORM call with no explicit field/relation selection at all
+     (risk of over-fetching now, or an N+1 the moment a lazy relation gets
+     touched later — the absence of an explicit list is the signal, not just
+     the loop case).
+  3. A bulk/batch endpoint.
+  4. An unbounded collection materialized in memory.
+  5. A blocking call on a path already known to be hot.
+  6. A query on a likely-hot/large-table path with no evident supporting
+     index.
+
+  Check the diff against each signal individually and report the result per
+  signal before concluding "no signal" — resolving the axis the conversation
+  happens to focus on (say, query count) clears only that signal, never the
+  others. On any hit, invoke `perf-review` autonomously and note in the
+  report which signal triggered it. Absent every signal, don't invoke or
+  recommend it speculatively.
 - Classify every finding: bug, risk, nit, or question. Over-engineering
   findings: delete, stdlib, native, yagni, or shrink. This classification is
   the severity signal — don't add a separate ranking.
