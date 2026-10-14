@@ -117,7 +117,20 @@ active, plus the rules for when each one gets invoked.
   what it represents, never the action of the code that consumes it (that
   belongs in the consuming function's docstring); a dependency's
   install/setup narrative belongs in README/CONTRIBUTING/docs, never inline
-  near the call site that uses it.
+  near the call site that uses it. The same holds for a reusable
+  design-pattern justification (a query idiom, a defensive-coding trade-off,
+  a naming rule) that applies across call sites: it lives once in the
+  project's conventions document (a `docs/` architecture/conventions page, a
+  `CONTRIBUTING.md` section). When that document lacks the pattern, propose
+  the addition to the developer rather than editing it (§1 scope control);
+  when the project has none, log it as an open question. Either way the
+  call-site justification stays until the conventions entry lands. A
+  justification is reusable when it would stay true copied to another call
+  site of the same pattern. Once documented, a call site states only what is
+  specific to it, never re-justifies the general rule. This is a different
+  failure from process narration: a design justification is legitimate
+  content in the wrong layer (relocate it), session narration is not content
+  at all (delete it).
 
 ## 3. Conversational register and artifacts
 
@@ -146,11 +159,12 @@ active, plus the rules for when each one gets invoked.
      genuinely absent, or dynamically typed code the server can't resolve).
   2. **`ast-grep`** for structural patterns when the exact spelling isn't
      known in advance (an attribute access on an unknown base, a family of
-     method names): match a pattern (`$X.field`, `def visit_$NAME`) rather
-     than enumerating `grep` guesses. This is the general tier ordering, not
-     a restatement of the specific triggers — `implementation` and `review`
-     state those (a pre-rename call-site audit, a precedent check before
-     accepting an unusual pattern).
+     method names): match a pattern (`$X.field`) or a rule (`kind` plus a
+     `regex` on the name field) rather than enumerating `grep` guesses. This
+     is the general tier ordering, not a restatement of the specific
+     triggers — `implementation` and `review` state those (a pre-rename
+     call-site audit, a precedent check before accepting an unusual
+     pattern).
   3. **`grep`** for lexical matches — a single known literal, config, docs,
      log strings, TODOs. Scope by path or extension first to keep results
      concise. Not for symbol definitions unless tiers 1-2 fail.
@@ -167,31 +181,57 @@ active, plus the rules for when each one gets invoked.
   tree, commit first (or `git stash create` + `git diff`), never a blind
   `stash`. This is the git safety boundary the `commit` and `pull-requests`
   skills defer to, alongside §5's approval gates.
+- A container that bind-mounts the working tree mounts it read-only (`:ro`)
+  and points caches and output outside the mount (`/tmp`, the tool's
+  cache-directory setting): a root-owned artifact left in the tree
+  (`__pycache__/`, a lint cache, build output) is often git-ignored, so it
+  never surfaces in `git status`, yet the developer can't delete it and it can
+  break the next build. A command that must write into the tree runs as the
+  host user — on a rootless engine, container root already is the host user.
+  Report root-owned leftovers already in the tree to the developer rather than
+  deleting them through a root container. Give each container a unique name,
+  or let the engine assign one, whenever another invocation may run
+  concurrently, so one task's `rm -f <name>` can't remove another task's
+  container.
 
 ## 5. Autonomous flow orchestration
 
 - Non-trivial implementation work starts from an approved plan: invoke
   `planning` before `implementation`, unless section 1's disambiguator
   determines the request is narrow enough to resolve directly in
-  `implementation`. `planning` mandatorily runs `product-review` alongside
-  it — comparing the request against order/spec documentation, requesting it
-  if none was given — never deferred or treated as optional.
+  `implementation`. `planning` runs `product-review` alongside it, not after
+  it.
 - After any change to non-test logic (behavioral code), invoke
   `agent-harness:review` automatically before reporting the task as done —
   it's a read-only pass, so it doesn't need an explicit request. Skip only for
   changes confined to docs, comments, or config, or to tests alone. Qualified
   name, not bare `review`: a platform's own generic code-review command may
-  share that word and must not be picked up here instead.
+  share that word and must not be picked up here instead. When the diff was
+  authored in this same session, the authoring agent delegates the review to
+  the `agent-harness:reviewer` subagent — pass it the diff range and the
+  approved plan or the ticket's requirements, never the authoring rationale.
+  An inline review inherits the context that produced the code and shares its
+  blind spots; every pass that follows `review` (`perf-review` on a signal,
+  `django-review` on a Django/DRF repo) runs inside the same subagent and
+  inherits its isolation. Relay its findings to the developer as reported; a
+  disagreement is added with its evidence, never by dropping the finding. A
+  diff authored outside the session is reviewed inline: it's already
+  independent.
 - `review` invokes `perf-review` autonomously when it surfaces a qualifying
-  performance signal (see `review`'s Additional checks) — the one
+  performance signal (see `review`'s performance-signal rule) — the one
   review-stage skill allowed to self-invoke another without waiting for a
   developer request, since the signal it acts on is itself the evidence.
   Absent a signal, `perf-review` runs only on explicit developer request.
 - Before proposing `commit`, confirm `agent-harness:review` actually ran on
-  the change — a verifiable precondition, not just the implied order. Once
-  `review` clears, ask whether to proceed to `commit` — draft the message only
-  after the developer agrees; `git add` and `git commit` run only once the
-  developer approves that drafted message.
+  the change — through `agent-harness:reviewer` for a same-session diff — a
+  verifiable precondition, not just the implied order. Once `review` clears,
+  ask whether to proceed to `commit` — draft the message only after the
+  developer agrees; `git add` and `git commit` run only once the developer
+  approves that drafted message.
+- A pull request opens only on an explicit developer request, and only once
+  the developer approves its drafted title and body. A push that rewrites
+  already-pushed history (`--force-with-lease` after a rebase) needs the same
+  explicit approval (§4).
 - Cap self-resolution attempts before escalating. After two attempts at the
   same blocker with no progress, stop and ask the developer directly (§1's
-  stop-and-ask) instead of retrying the same failing approach a third time.
+  stop-and-flag) instead of retrying the same failing approach a third time.

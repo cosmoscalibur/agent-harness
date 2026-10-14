@@ -83,10 +83,10 @@ uv run scripts/sync.py
 Copies `rules/agent-harness.md` into `~/.claude/rules/` (a global rule loaded at
 session start; your own `~/.claude/CLAUDE.md` is left untouched unless it is a
 legacy copy of this ruleset, which is removed) and installs the
-plugin (skills, the bundled language servers, the Ruff/rumdl hooks, the
-chrome-devtools MCP dependency, the bundled `notion` MCP server, and the
-attribution `settings.json`). Re-run
-after every update to this repo, then restart Claude Code to apply.
+plugin (skills, the `reviewer` subagent, the bundled language servers, the
+Ruff/rumdl hooks, the chrome-devtools MCP dependency, the bundled `notion` MCP
+server, and the attribution `settings.json`). Re-run after every update to
+this repo, then restart Claude Code to apply.
 
 ## Manual Personalization (Claude.ai Web & `~/.claude/CLAUDE.md`)
 
@@ -148,7 +148,8 @@ structure, versioning, and cross-tool references.
 | Skill             | Source                                                          | License | Description                                                                                                                                                                 |
 | ----------------- | --------------------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `agent-readiness` | [Factory AI](https://www.factory.ai/agent-readiness)            | MIT     | Scores a repository's readiness for autonomous AI agent development across 9 pillars with a phased plan; adapted from Factory AI's framework to modern tooling conventions. |
-| `ast-grep`        | [ast-grep/agent-skill](https://github.com/ast-grep/agent-skill) | MIT     | Guides structural, AST-based code search and rule authoring; used as-is, no adaptation.                                                                                     |
+| `ast-grep`        | [ast-grep/agent-skill@f2175af](https://github.com/ast-grep/agent-skill/tree/f2175aff21f20cfb8e2db30c28febeb3a2d42b61) | MIT     | Guides structural, AST-based code search and rule authoring; used as-is, no adaptation.                                                                                     |
+| `ast-grep-outline` | [ast-grep/agent-skill@f2175af](https://github.com/ast-grep/agent-skill/tree/f2175aff21f20cfb8e2db30c28febeb3a2d42b61) | MIT     | Maps a file's or directory's structure (imports, exports, members) with `ast-grep outline` before reading full source; used as-is, no adaptation. |
 | `planning`        | Own                                                             | MIT     | Produces the pre-implementation plan: scope, design decisions, and which of them need developer approval vs. autonomous resolution; mandatorily pairs with `product-review`. |
 | `implementation`  | Own                                                             | MIT     | Governs how code gets written against an approved plan: paradigm choice, over-engineering discipline, idiomaticity, verbosity, and the task completion checklist.           |
 | `review`          | Own                                                             | MIT     | Runs standard, adversarial, and over-engineering review passes, language-agnostic; auto-invoked after `implementation`; invokes `perf-review` autonomously on a performance signal. |
@@ -156,10 +157,16 @@ structure, versioning, and cross-tool references.
 | `perf-review`     | Own                                                             | MIT     | Performance-focused review pass (complexity, N+1 queries, allocations, blocking calls), language-agnostic; not run by default — invoked by `review` on a signal, or on explicit request. |
 | `commit`          | Own                                                             | MIT     | Governs commit message structure and file grouping; never runs without an explicit developer request.                                                                       |
 | `pull-requests`   | Own                                                             | MIT     | Governs PR title/body conventions; never runs without an explicit developer request.                                                                                        |
-| `django-review`   | Own                                                             | MIT     | Django/DRF-specific review conventions (ORM patterns, DRF exception handling, field nullability); a supplementary pass after `review` on Django repos.                  |
+| `django-review`   | Own                                                             | MIT     | Django/DRF-specific review conventions (ORM patterns, DRF exception handling, database constraints, imports); a supplementary pass after `review` on Django repos.          |
 
 See [`docs/rules-and-skills.md`](docs/rules-and-skills.md) for the skill
 authoring format and how Claude Code deploys rules and skills.
+
+### Subagents (Claude Code)
+
+| Subagent   | Description                                                                                                                                                       |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `reviewer` | Runs `agent-harness:review` and the passes that follow it (`perf-review` on a signal, `django-review` on Django/DRF) on a diff authored in the calling session, from a fresh context with file-edit tools disabled; delegated to per `rules/agent-harness.md` §5. |
 
 ### MCP & LSP (Claude Code)
 

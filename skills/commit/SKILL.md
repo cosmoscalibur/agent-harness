@@ -71,16 +71,3 @@ description: >-
   distinct from §1's guard duty against the agent proposing new unsolicited
   work: the change already exists in the working tree, it isn't being
   proposed.
-
-## Note
-
-This skill owns commits end to end — both proposing them for approval and
-executing them — and that ownership is exclusive: commit grouping and
-messaging never belong to planning or implementation, and are never decided ad
-hoc before this skill is invoked. Proposing or previewing *how* to group or
-split commits is itself part of this skill, not only writing the final
-message: invoke it for any request to commit, draft, propose, preview, or
-group commits — not just the literal word "commit". Running `git add`/`git
-commit` is the final step: never run them until the developer approves the
-drafted proposal, per the git safety boundary in `agent-harness.md` §4 and its
-§5 approval gates.

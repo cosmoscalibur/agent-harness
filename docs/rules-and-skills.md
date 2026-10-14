@@ -49,6 +49,20 @@ A skill is a directory under `skills/` whose form is fixed:
   reports a skill's projected always-on and on-invoke token cost.
 - Register the skill in the README's *Skills* table.
 
+## Adding a subagent
+
+A subagent is a Markdown file under `agents/` that Claude Code registers as
+`agent-harness:<name>`:
+
+- Begin it with YAML frontmatter: `name` (no `:`, which is reserved for the
+  plugin scope) and a `description` stating when to delegate to it; the body
+  is the subagent's system prompt.
+- Plugin subagents ignore the `hooks`, `mcpServers`, and `permissionMode`
+  fields, so tool access is restricted only through `tools` or
+  `disallowedTools`; anything finer (e.g. keeping `Bash` to read-only
+  commands) is an instruction in the body.
+- Register it in the README's *Subagents* table.
+
 ## Deployment (Claude Code)
 
 Claude loads the skills from the installed plugin but doesn't read a plugin's
@@ -65,8 +79,9 @@ that is three steps:
    `claude plugin marketplace add <repo>`.
 3. Install the plugin: `claude plugin install agent-harness@agent-harness`
    (`claude plugin update …` once it's already installed). This carries the
-   skills and the bundled `.lsp.json`/`hooks/`/`.mcp.json`/`settings.json`; the
-   ruleset copy in step 1 is not part of it.
+   skills, the `agents/` subagents, and the bundled
+   `.lsp.json`/`hooks/`/`.mcp.json`/`settings.json`; the ruleset copy in step 1
+   is not part of it.
 
 `scripts/sync.py` automates these three steps — adjust it there when the flow
 changes.

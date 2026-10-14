@@ -67,7 +67,7 @@ model helps evaluators and authors understand where information should live.
 
 | Memory tier | Files | Agent behavior | Rationale |
 | --- | --- | --- | --- |
-| **Hot** (always loaded) | README.md, agent context files (`AGENTS.md` + `.agents/rules/`, or `CLAUDE.md` + `.claude/`) | Read on every task before making changes | Small, high-signal content the agent needs for every interaction: commands, stack, constraints |
+| **Hot** (always loaded) | Agent context files (`AGENTS.md`, or `CLAUDE.md` + `.claude/`), plus README.md when they import it (`@README.md`) | Read on every task before making changes | Small, high-signal content the agent needs for every interaction: commands, stack, constraints |
 | **Warm** (loaded on demand) | `docs/` directory, inline code comments | Read when a task touches the relevant area | Larger, topic-specific content; loading everything would waste context window |
 
 Agent context files bridge the two tiers: they live in hot memory and **point
@@ -75,9 +75,9 @@ to** warm memory (`docs/`) so the agent knows where to look for deeper context.
 
 ### Implications for Content Placement
 
-- **Hot memory must be concise.** Every line in README or agent context files
-  consumes agent context window on every task. Put only essential, high-frequency
-  information here.
+- **Hot memory must be concise.** Every line in agent context files, and in a
+  README they import, consumes agent context window on every task. Put only
+  essential, high-frequency information here.
 - **Warm memory can be detailed.** Architecture docs, design decisions, and
   coding convention guides belong in `docs/`. Agents load them when relevant.
 - **Agent context files are the bridge.** They tell the agent "read `docs/X`

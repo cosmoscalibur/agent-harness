@@ -16,10 +16,14 @@ without explicit developer approval on the plan.
 
 ## Rules
 
-- Before starting analysis, ensure the current branch is up to date with the
-  remote default branch (fetch and compare, e.g. `git fetch` +
-  `git status -sb` or `git log HEAD..origin/<default>`). A plan built on
-  stale local state can target code that's already changed upstream.
+- Before starting analysis, update the current branch with the remote
+  default branch through git's configured integration (`git pull origin
+  <default-branch>`, which applies the repo's or global `pull.rebase`/
+  `merge.ff` settings). A plan built on stale local state can target code that's
+  already changed upstream. Stop and flag instead of updating when the tree
+  isn't clean (`agent-harness.md` §1's repo-state preflight), the update
+  conflicts, no integration is configured (the pull fails on divergent
+  branches), or it would rewrite commits already pushed.
 - The plan states: scope, key design decisions, open ambiguities.
 - Evaluate each design decision on the problem's actual nature — never
   default to a paradigm, pattern, or defense level without justifying fit;
@@ -34,10 +38,9 @@ without explicit developer approval on the plan.
 - Frame the task as a verifiable, test-first goal: "add validation" → write
   failing tests for invalid input, then pass them. "fix bug" → reproduce with
   a test, then fix. "refactor X" → tests green before and after.
-- Invoke `product-review` alongside this skill, not after it — comparing the
-  request against order/spec documentation, and requesting that
-  documentation if none was given, is mandatory for any non-trivial change,
-  never optional or deferred to a later pass. See `product-review`.
+- Invoke `product-review` alongside this skill, not after it, for any
+  non-trivial change: it compares the request against the order/spec
+  documentation and requests that documentation when none was given.
 
 ## Handoff
 

@@ -148,7 +148,9 @@ Verify `docs/` has a `README.md` index, design docs, and coding patterns.
 | D3.2 Doc maintenance rules | | | |
 | D3.3 Minimal agent skills | | | |
 
-**D3 Score**: ___ / 3 → ✅ (3/3) / ⚠️ (2/3 or misplaced restrictions) / ❌ (≤1 or duplicates)
+**D3.1-D3.2 Score** (L1): ___ / 2 → ✅ (2/2) / ⚠️ (1/2, outdated, or misplaced restrictions) / ❌ (0/2 or duplicates)
+
+**D3.3 Score** (L2): ✅ (review + documentation) / ⚠️ (one) / ❌ (neither)
 
 **Agent-specific vs general check**: <!-- Flag any general restrictions found in the agent context file (AGENTS.md / CLAUDE.md) -->
 
@@ -157,8 +159,8 @@ Verify `docs/` has a `README.md` index, design docs, and coding patterns.
 **D8 — Domain Convention Completeness**
 
 Verify that code conventions (D8) include domain-specific topics for the
-project type. Use the project-type convention recommendations table in the
-skill to evaluate completeness.
+project type. Use the project-type convention recommendations table in
+`resources/pillar4_documentation.md` (D8) to evaluate completeness.
 
 | Check | Status | Evidence |
 | --- | --- | --- |
