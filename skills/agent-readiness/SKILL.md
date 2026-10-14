@@ -1,9 +1,10 @@
 ---
 name: agent-readiness
 description: >-
-  Evaluate a repository's readiness for autonomous AI agent development, based
-  on Factory AI's agent readiness framework adapted to modern tooling standards.
-  Produces a scored report across 9 pillars with a phased enhancement plan.
+  Score a repository's readiness for autonomous AI-agent development and
+  produce a phased enhancement plan. Use when onboarding a repository for
+  AI-assisted development, running a periodic audit of its tooling, docs, CI,
+  and agent context for gaps, or planning developer-tooling modernization.
 ---
 
 # Agent Readiness Evaluation
@@ -12,12 +13,6 @@ Evaluate how well a codebase supports autonomous AI-assisted development. Based
 on
 [Factory AI Agent Readiness](https://docs.factory.ai/web/agent-readiness/overview),
 adapted to modern tooling standards and agent platform conventions.
-
-## When to Use
-
-- Onboarding a new repository for AI-assisted development.
-- Periodic audits to find improvement areas.
-- Planning modernization efforts for developer tooling.
 
 ## Workflow
 
@@ -50,22 +45,10 @@ not provide these in the prompt, **ask before proceeding**.
 
 ### Step 1 — Detect the Ecosystem
 
-Identify the primary language and framework by inspecting root-level files:
-
-| Indicator Files                                               | Ecosystem            |
-| ------------------------------------------------------------- | -------------------- |
-| `pyproject.toml`, `setup.py`, `requirements.txt`              | Python               |
-| `Cargo.toml`                                                  | Rust                 |
-| `package.json` + React in deps                                | React (Node.js)      |
-| `package.json` (no framework)                                 | Vanilla JS / Node.js |
-| `package.json` + TypeScript in deps                           | TypeScript           |
-| `go.mod`                                                      | Go                   |
-| `Gemfile`                                                     | Ruby                 |
-| `notebooks/`, `*.ipynb`, ML deps (torch, tensorflow, sklearn) | AI Development       |
-| `cloudbuild.yaml`, `app.yaml`, `.gcloudignore`                | GCP Infrastructure   |
-
-Record the ecosystem; it determines which modernization recommendations apply
-(see `resources/modernization_recommendations.md`).
+Identify the primary language, framework, and platform from root-level
+manifests and config, including notebooks/ML dependencies and GCP deploy files.
+Record the ecosystem; it selects which sections of
+`resources/modernization_recommendations.md` apply.
 
 ### Step 2 — Audit Each Pillar
 
@@ -265,7 +248,7 @@ for the project type and repository type):
 | Level | Requirement |
 | ----- | ----------- |
 | L1 Functional | Starting point (all repos) |
-| L2 Documented | ≥ 80% of L1 criteria pass (S1-S3, B1-B2, T1-T4, D1, D3, E3, X1) |
+| L2 Documented | ≥ 80% of L1 criteria pass (S1-S3, B1-B2, T1-T4, D1, D3.1-D3.2, E3, X1) |
 | L3 Standardized | L2 + ≥ 80% of L2 criteria (D2, D3.3, D4-D5, E1-E2, O1-O2, K1-K2) |
 | L4 Optimized | L3 + ≥ 80% of L3 criteria (S4-S5, S7, B3-B4, T5-T6, T9, X2-X3) |
 | L5 Autonomous | L4 + ≥ 80% of L4 criteria (S6, B5, T7-T8, D5.1, D5.2, D6-D8, E4-E5, O3-O5, X4-X5, K3-K4, P1-P3) |
@@ -322,8 +305,8 @@ Save the completed evaluation to the target repository for historical tracking.
 
 ### Step 6 — Present to User
 
-Use `notify_user` with `BlockedOnUser: true` to request review of the
-implementation plan. Include questions about:
+Present the report and enhancement plan, then wait for the user's review
+before implementing any phase. Include questions about:
 
 - Team ownership for CODEOWNERS
 - Environment variable sources for `.env.example`
@@ -332,9 +315,6 @@ implementation plan. Include questions about:
 
 ## Output Artifacts
 
-The skill produces two artifacts:
-
-| File | Content |
-| --- | --- |
-| `implementation_plan.md` | Evaluation report + phased enhancement plan (use template) |
-| `docs/agent-readiness/agent-readiness_YYYY-MM-DDThh-mm.md` | Persisted evaluation report for historical tracking |
+The evaluation report with its phased enhancement plan (built from
+`resources/evaluation_template.md`), presented in Step 6 and persisted at
+`docs/agent-readiness/agent-readiness_YYYY-MM-DDThh-mm.md` (Step 5).

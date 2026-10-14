@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "printf %s '{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"At session start, before any code-symbol search, load the LSP tool schema with ToolSearch (select:LSP). Prefer LSP (goToDefinition/findReferences) over grep for symbols; see rules/agent-harness.md section 4.\"}}'"
+            "command": "printf %s '{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"At session start, before any code-symbol search, load the LSP tool schema with ToolSearch (select:LSP). Prefer LSP (goToDefinition/findReferences) over grep for symbols; see agent-harness.md section 4.\"}}'"
           }
         ]
       }

@@ -47,4 +47,5 @@ or `perf-review`'s performance pass.
   plausibly attempt versus one only a fuzzer would reach.
 - Classify every finding: bug, risk, nit, or question — same classification
   as `review`, so both passes' output composes.
-- Format: `<file>:L<line>: <problem>. <fix>.`
+- Format: `<file>:L<line>: <problem>. <fix>.` At plan stage, before a diff
+  exists, cite the plan item or spec section in place of `<file>:L<line>`.

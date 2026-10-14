@@ -3,10 +3,8 @@ name: django-review
 description: >-
   Code-review conventions for Django/DRF projects — DRF's default exception
   handling, ORM patterns (filters, select_related/only), database
-  constraints, and imports. Model/service names in the examples are
-  generalized to apply to any Django project, not a specific repo.
-  Complements `review` (language-agnostic) — run this pass after that one
-  when the repo is Django/DRF.
+  constraints, and imports. Complements `review` (language-agnostic) — run
+  this pass after that one when the repo is Django/DRF.
 ---
 
 # Code Review — Django/DRF conventions
@@ -33,12 +31,8 @@ the general language-agnostic criteria.
   fk=full_object)`: Django accepts the full instance as a convenience, but
   that doesn't change that the filter only needs the id — use an explicit
   `fk_id=object.id`. Don't treat it as a special case just because the
-  object was already in memory (e.g. `request.user`): passing the whole
-  object when the `id` suffices is a real memory/time overhead versus
-  passing that id (or a couple of specific fields) directly, whether it
-  takes the shape of a function parameter or a `.filter()`/
-  `get_object_or_404()` kwarg — a fully-hydrated instance carries its whole
-  field set and internal state, not just the value actually read. This is
+  object was already in memory (e.g. `request.user`): the filter then
+  depends on the whole instance where it only reads the id. This is
   separate from how the object was originally fetched: if that retrieval
   query has no explicit field list (no `.only()`/`.values()`), that's its
   own performance risk — more memory, bandwidth, and time spent fetching
@@ -88,8 +82,7 @@ the general language-agnostic criteria.
 
 ## Concrete cases
 
-Illustrations of `review`'s general rules in Django/DRF terms
-(model/service names generalized):
+Illustrations of `review`'s general rules in Django/DRF terms:
 
 - **Unjustified defensiveness, DRF version.** A `try/except DatabaseError`
   around a side effect that has never failed in production, or an
@@ -107,16 +100,16 @@ Illustrations of `review`'s general rules in Django/DRF terms
 - **Architecture first, DRF version.** Before accepting a new admin
   interface or endpoint, ask whether another one already solves the use
   case. Before accepting a mixin not seen elsewhere in the repo, or an
-  explicit `http_method_names` as a reasonable idiom, run `ast-grep`/`grep`
-  to confirm it's genuinely unprecedented.
+  explicit `http_method_names` as a reasonable idiom, run `ast-grep` to
+  confirm it's genuinely unprecedented.
 
 - **Rename without auditing call sites, Django version.** A service rename
   that changes its signature (from taking the user instance to taking just
   its `id`) updates the class and most call sites, but leaves one passing
   `self.request.user` (the object) instead of `.id` inside a nested
   function. Unit tests miss it when they call the method directly with the
-  correct type — only a structural search or a second manual pass catches
-  it. See the LSP call-site audit rule in `review`.
+  correct type — only an audit of every call site catches it. See the LSP
+  call-site audit rule in `review`.
 
 - **Invented business justification, ORM version.** An `on_delete=PROTECT`
   against a hard user delete that in practice never happens, when the user
@@ -128,7 +121,7 @@ Illustrations of `review`'s general rules in Django/DRF terms
   meaning, not format or the rule that already governs it (that lives in
   the validator/serializer). Explaining permission logic that lives in the
   permission class inside a view is the same misplaced-layer failure — see
-  the documentation-as-noise rule in `review`.
+  the documentation pass in `review`.
 
 ## Format
 

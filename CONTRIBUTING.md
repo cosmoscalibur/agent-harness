@@ -13,7 +13,9 @@ covers project structure, versioning, and cross-tool reference material.
   `CLAUDE.md` whose heading is the ruleset title).
 - `skills/<name>/SKILL.md` — the stage skills (planning, implementation,
   review, product-review, perf-review, commit, pull-requests) plus the
-  agent-readiness, ast-grep, and django-review skills.
+  agent-readiness, ast-grep, ast-grep-outline, and django-review skills.
+- `agents/<name>.md` — bundled subagents (the isolated `reviewer` that §5 of
+  the ruleset delegates same-session reviews to).
 - `hooks/` — bundled Claude Code hooks (see `docs/hooks.md`). `.lsp.json` —
   bundled language servers. `.mcp.json` — bundled MCP servers. `settings.json`
   — bundled settings (git/PR attribution).

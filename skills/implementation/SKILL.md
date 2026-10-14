@@ -44,9 +44,9 @@ level without justifying fit.
   prior flow already guarantees. Don't create a type for trivial internal
   structures just to apply the pattern.
 - The trust boundary is the external system, not the agent's own workspace:
-  local, reversible actions inside a version-controlled repo (editing or
-  deleting a file) need no pre- or post-action validation — version control is
-  the safety net.
+  editing or deleting a tracked file whose state is committed needs no pre- or
+  post-action validation — version control is the safety net. Uncommitted
+  work has no such net (`agent-harness.md` §4).
 - Fail fast on programmer invariants and genuinely unexpected states. Never
   silently absorb a bug signal.
 - Data is obligatory by default: every input, field, column, or table is

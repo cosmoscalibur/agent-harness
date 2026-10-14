@@ -30,7 +30,7 @@ flake8, pylint) with two ruff hooks:
 ```yaml
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.0  # Match version in pyproject.toml dev dependencies
+    rev: vX.Y.Z  # Match the ruff version in pyproject.toml dev dependencies
     hooks:
       - id: ruff
         args: [--fix]
@@ -244,14 +244,14 @@ repos:
 > The antipattern is **duplicating** human-facing documentation into agent
 > context files. Agent context files (any format) must **reference** README.md
 > and `docs/` as the single source of truth and add only agent-specific
-> constraints.
+> instructions; general constraints belong in shared documentation.
 
 | Scenario | Recommended | Notes |
 | --- | --- | --- |
 | No agent context | Add `AGENTS.md` | `AGENTS.md` is the recommended cross-tool entry file for any IDE or AI agent; `CLAUDE.md` is Claude Code's native equivalent. Content must reference README/docs, not restate them. |
-| Claude-only setup wanting cross-tool reach | Add `AGENTS.md`, have `CLAUDE.md` import or symlink it | Claude Code reads `CLAUDE.md` / `.claude/` natively but not `AGENTS.md`. Keep one source of truth: `CLAUDE.md` imports (`@AGENTS.md`) or symlinks a shared `AGENTS.md` so both Claude and cross-tool agents load the same content. |
+| Claude-only setup wanting cross-tool reach | Add `AGENTS.md`, have `CLAUDE.md` import or symlink it | With both files present, Claude Code loads `CLAUDE.md` only by default. Keep one source of truth: `CLAUDE.md` imports (`@AGENTS.md`) or symlinks a shared `AGENTS.md` so both Claude and cross-tool agents load the same content. |
 | Two divergent copies (`AGENTS.md` **and** `CLAUDE.md`) | Consolidate to one source of truth | Make one import (`@path`), symlink, or generate-from the other. Divergent duplicates drift and are the two-file form of the duplication antipattern. |
-| Agent files duplicate README/docs | Refactor to reference existing docs | Replace duplicated content with pointers (e.g., "Read `docs/architecture/` for…"). Add only agent-specific items: coding patterns, architectural constraints, doc maintenance rules. |
+| Agent files duplicate README/docs | Refactor to reference existing docs | Replace duplicated content with pointers (e.g., "Read `docs/architecture/` for…"). Add only agent-specific items: doc loading instructions, workflow commands, tool preferences, doc maintenance rules. |
 
 **Example** — a well-structured `AGENTS.md` (identical content serves as
 `CLAUDE.md`; a Claude repo can point `CLAUDE.md` at it with a single

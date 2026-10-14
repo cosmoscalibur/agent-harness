@@ -11,10 +11,13 @@ acting. Exactly two conventions are recognized as valid — `AGENTS.md` and
 `CLAUDE.md`, no others. Evaluate whichever the repo uses, and never penalize
 one for not being the other:
 
-- **`AGENTS.md`** (with the `.agents/` directory) — the tool-agnostic
-  cross-tool standard for agent context files.
+- **`AGENTS.md`** — the tool-agnostic cross-tool standard for agent context
+  files. The standard defines only the file; a companion `.agents/` directory
+  is a per-tool convention outside it.
 - **`CLAUDE.md`** (with the `.claude/` directory) — Claude Code's native
-  scheme; Claude does not read `AGENTS.md` natively.
+  scheme. Claude Code also reads `AGENTS.md`, by default only when no
+  `CLAUDE.md`, `.claude/CLAUDE.md`, or `CLAUDE.local.md` exists in the working
+  directory or above it.
 
 The **antipattern** is duplicating human-facing documentation into these
 files instead of referencing it. Agent context files should **point to**
@@ -41,7 +44,8 @@ are general-purpose.
   naming conventions, required review processes, code style rules.
 
 **Hot / warm memory model** (see `documentation_strategy.md`):
-README.md and agent context files are **hot memory** — loaded on every task.
+Agent context files, and README.md when they import it (`@README.md`), are
+**hot memory** — loaded on every task.
 `docs/` is **warm memory** — loaded on demand when the task touches that area.
 Agent context files bridge the two tiers: they live in hot memory and point to
 warm memory so the agent knows where to look for deeper context.
@@ -71,13 +75,21 @@ changed files (S7), tests pass + coverage (T1, T4–T6), changelog fragment
 (D2), code conventions (D8), API docs (D5, D5.2), changelog fragment (D7.2),
 agent context (D3.2).
 
-**Scoring D3**:
+**Scoring D3**: D3.1-D3.2 score together as an L1 criterion (the agent
+context file itself); D3.3 scores on its own as an L2 criterion: codified
+review and documentation skills record how the agent must work to produce
+correct output, which is documented knowledge, without enforcing it through
+automation.
 
-- ✅ **Pass**: all 3 sub-criteria present with accurate, current content
-- ⚠️ **Partial**: 2 of 3 present, or content exists but is outdated; or general
-  restrictions are placed in agent context files instead of shared documentation
-- ❌ **Fail**: ≤ 1 present, or agent files duplicate README/docs instead of
-  adding agent-specific instructions
+- D3.1-D3.2:
+  - ✅ **Pass**: both present with accurate, current content
+  - ⚠️ **Partial**: one present, or content exists but is outdated; or general
+    restrictions are placed in agent context files instead of shared
+    documentation
+  - ❌ **Fail**: neither present, or agent files duplicate README/docs instead
+    of adding agent-specific instructions
+- D3.3: ✅ both a code review and a documentation skill/subagent; ⚠️ one of
+  them; ❌ neither.
 
 **Evaluating content accuracy**: Verify that agent context files reference
 existing docs rather than restating them. Check that documented constraints

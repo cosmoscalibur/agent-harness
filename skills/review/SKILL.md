@@ -19,11 +19,9 @@ description: >-
   naming semantics, adherence to the `implementation` skill's paradigm,
   over-engineering, declarative/procedural, idiomaticity, and verbosity
   rules.
-- Scope of every check in this skill is the diff, full stop — including code
-  the same session just produced during `implementation` minutes earlier,
-  evaluated with the same scrutiny as pre-existing or third-party code under
-  audit. Applicability isn't "code under review request," it's "any code in
-  the diff."
+- Scope of every check in this skill is the whole diff, every line held to
+  the same scrutiny whoever wrote it. The authoring session delegates its own
+  diff to the `agent-harness:reviewer` subagent (`agent-harness.md` §5).
 - Architecture-first pass, at any level of granularity: before accepting a
   new surface (endpoint, admin, service) as necessary, check whether an
   existing one already covers the use case. Before discussing an unusual
@@ -39,7 +37,9 @@ description: >-
   comparison ("same as X", "see Y") where a structured cross-reference
   directive was warranted, a constant's doc or name describing its
   consumer's action or context instead of its own meaning, install/setup
-  narrative that belongs in README/CONTRIBUTING instead, a placeholder/stub
+  narrative that belongs in README/CONTRIBUTING instead, a reusable
+  design-pattern justification restated at a call site instead of documented
+  once in the project's conventions document, a placeholder/stub
   that isn't fully traceable — missing an explicit
   `NotImplementedError`/failing-test marker, missing a TODO documenting the
   pending work, or — when the repo keeps a roadmap document — that document
@@ -48,7 +48,15 @@ description: >-
   implicit, a hardcoded literal restating a count or fact derivable from the
   code (`agent-harness.md` §2), and a negative-framed sentence ("doesn't need
   X", "without invoking Y") that's either redundant with a positive fact
-  stated elsewhere or rephrasable as one.
+  stated elsewhere or rephrasable as one. Also flag signs of an agent's
+  personal note rather than documentation: full sentences alternating
+  between two languages in one block (a lone adopted term like "backfill" is
+  fine), a UI help field (`help_text`, `description`) restating format or a
+  validator's rule instead of business meaning, a comparison to an
+  unrelated model, an inline library-version pin, an explanation of the
+  framework/ORM instead of the decision, a "Summary:" prefix on a technical
+  docstring, or logic that lives in another module (e.g. permissions)
+  explained at its point of consumption.
 - Readiness feedback loop pass: if a failure or hallucination this task
   traced to missing or poor project documentation or context boundaries
   (README, CLAUDE.md, `docs/`), say so and recommend the specific fix,
@@ -98,16 +106,25 @@ description: >-
   access to it is a symptom that can surface later, never the criterion
   itself, so its absence doesn't clear the symbol either.
 - Performance signal → `perf-review`: performance is not reviewed by this
-  pass by default. When the diff shows a qualifying signal — a query issued
-  inside a loop with no batching/prefetch, a query or ORM call with no
-  explicit field/relation selection at all (risk of over-fetching now, or an
-  N+1 the moment a lazy relation gets touched later — the absence of an
-  explicit list is the signal, not just the loop case), a bulk/batch
-  endpoint, an unbounded collection materialized in memory, a blocking call
-  on a path already known to be hot, or a query on a likely-hot/large-table
-  path with no evident supporting index — invoke `perf-review` autonomously
-  and note in the report that the signal triggered it. Absent such a signal,
-  don't invoke or recommend it speculatively.
+  pass by default. Any one of these signals in the diff qualifies:
+  1. A query issued inside a loop with no batching/prefetch.
+  2. A query or ORM call with no explicit field/relation selection at all
+     (risk of over-fetching now, or an N+1 the moment a lazy relation gets
+     touched later — the absence of an explicit list is the signal, not just
+     the loop case).
+  3. A bulk/batch endpoint.
+  4. An unbounded collection materialized in memory.
+  5. A blocking call on a path already known to be hot.
+  6. A query on a likely-hot/large-table path with no evident supporting
+     index.
+
+  When the diff touches queries, I/O, or collections, list each query (with its
+  field selection), materialized collection, and blocking call it adds or
+  changes, with its `file:line`, before concluding "no signal" — resolving the
+  axis the conversation happens to focus on (say, query count) clears only that
+  signal, never the others. On any hit, invoke `perf-review` autonomously and
+  note in the report which signal triggered it. Absent every signal, don't
+  invoke or recommend it speculatively.
 - Classify every finding: bug, risk, nit, or question. Over-engineering
   findings: delete, stdlib, native, yagni, or shrink. This classification is
   the severity signal — don't add a separate ranking.
@@ -138,14 +155,20 @@ description: >-
   without affecting the end user. This applies equally to payload validation
   and to I/O (a `try/except` around a side effect that has never failed in
   production). See `django-review` for the concrete DRF-endpoint case.
+  Once one unjustified guard is found, sweep the rest of the method/file
+  with the same question — a `.get(..., default)` or `or []` two lines below
+  usually rests on the same premise. A fallback over cross-cutting config the
+  whole application needs (settings, infrastructure feature flags) prevents
+  nothing: if it were missing, other parts would break first, and the
+  fallback only moves the error somewhere harder to diagnose.
 
-  - **Caveat that matters — check this BEFORE asking for a guard to be
+  - **Caveat that matters — check this before asking for a guard to be
     removed: does removing the guard produce a real failure, or does it let
     invalid data through with no failure at all?** "Let it crash" is only the
     right alternative when the invalid data breaks something on its own
     further down (a numeric cast over non-numeric text raises; accessing an
-    attribute on a null object also raises). If the invalid data is the SAME
-    TYPE as valid data but outside the business range (a year that's still a
+    attribute on a null object also raises). If the invalid data is the same
+    type as valid data but outside the business range (a year that's still a
     valid integer for the column, an id with the correct format that just
     doesn't correspond to anything), removing the check doesn't cause any
     crash at all — it causes the bad data to persist silently with a
@@ -169,8 +192,7 @@ description: >-
     what evidence?", and only if the answer is "improbable" ask "which line
     of code actually explodes if it happens anyway?" — if nothing explodes
     and the probability isn't negligible, the middle ground (manual logging
-    without rejecting) is a legitimate answer you hadn't considered with only
-    "keep vs. remove".
+    without rejecting) is a legitimate option alongside keep and remove.
 
   - **Adjustment when the risk is about a shared pattern, not a single
     endpoint.** If the accepted risk scenario is about an input pattern
@@ -203,18 +225,16 @@ description: >-
 
 - **Pass what's used, not the whole object.** If a function only reads the
   `id` (or two or three specific fields) of a related object, its signature
-  should receive those values directly — not the whole object. Don't treat
-  it as a special case just because the object was already in memory (e.g.
-  the current session's user): passing the whole object when the `id`
-  suffices is the same unnecessary coupling, whether it takes the shape of a
-  function parameter or a query filter, and it's a real memory/time overhead
-  on its own — a fully-hydrated object carries its whole field set and
-  internal state where a scalar or a small dict of the specific fields used
-  would do. That's a separate concern from how the object was originally
-  fetched: a retrieval query with no explicit field selection pays its own
-  memory/bandwidth/time cost regardless of how the result is later passed
-  around — see `perf-review`'s field/relation-selection rule for that half.
-  See `django-review` for the same pattern disguised in ORM filters.
+  should receive those values directly — not the whole object. Don't treat it as
+  a special case just because the object was already in memory (e.g. the current
+  session's user): passing the whole object when the `id` suffices is the same
+  unnecessary coupling, whether it takes the shape of a function parameter or a
+  query filter — and it forces a caller that holds only the `id` to fetch the
+  full object first. That's a separate concern from how the object was
+  originally fetched: a retrieval query with no explicit field selection pays
+  its own memory/bandwidth/time cost regardless of how the result is later
+  passed around — see `perf-review`'s field/relation-selection rule for that
+  half. See `django-review` for the same pattern disguised in ORM filters.
 
 - **No redundant queries when the caller already has the data.** Before
   accepting that an internal method "re-queries for isolation" a record the
@@ -306,43 +326,6 @@ description: >-
   semantic pattern that term already carries in the repo, not just that it
   lives in `services/`.
 
-- **If you accept the "don't be defensive if you control the input"
-  principle, apply it to the whole diff, not just the first site where you
-  noticed it.** It's common for a fix to remove a one-line `try/except` but
-  leave a `.get(..., default)` or an `or []` two lines below, on exactly the
-  same premise (the caller is yours, the config is yours). After finding the
-  first case of unjustified defensiveness, sweep the same method/file again
-  asking the same question of every remaining guard: what real scenario
-  would trigger it? A fallback over cross-cutting config the entire
-  application needs (settings, infrastructure feature flags) is the most
-  deceptive case: if it were missing, other parts of the system would
-  already have broken before reaching your guard, so the fallback prevents
-  nothing — it only postpones the error to a point where it's harder to
-  diagnose.
-
-- **A docstring/comment doesn't mix languages within the same block.** If
-  the file/module is already written in one language, a lone technical term
-  in another ("backfill", "legacy") is fine when it has no natural
-  translation or is jargon the team has already adopted, but avoid
-  alternating full sentences between the two languages in the same
-  paragraph — read it back and confirm it doesn't read like code-switching.
-
-- **Documentation as noise — signs of the agent's personal notes.** Each
-  layer documents its own responsibility: a UI help field (`help_text` in
-  Django, `description` in other frameworks) is business meaning, not format
-  or the rule that already governs it (that lives in the validator); the
-  reason for an implementation decision lives in the code that implements
-  it, not repeated in a domain doc and the changelog. The bar isn't "it took
-  me effort to understand", it's "a future maintainer needs it and can't get
-  it anywhere else" — see `agent-harness.md` §2. Concrete signs that a
-  paragraph is the agent's personal note rather than documentation: comparing
-  to an unrelated model with no functional link, pinning a library version
-  inline, explaining the framework/ORM instead of the actual decision, or a
-  "Summary:" prefix on a technical docstring (technical documentation states
-  facts, it doesn't summarize for a non-technical reader). Explaining logic
-  that lives in another module (e.g. permissions) at its point of
-  consumption is the same misplaced-layer failure.
-
 - **Signature-change call-site audit.** After a signature change (method
   rename, new/different parameters, type change), audit *every* call site —
   with LSP, not grep. Use `LSP prepareCallHierarchy` + `incomingCalls` on the
@@ -350,9 +333,10 @@ description: >-
   of the enclosing function, with no noise from imports, `__all__` string
   entries, or text matches inside comments — grep does bring that noise, and
   can also fail silently if the method is invoked through a variable/alias.
-  If `LSP` isn't available for the language, `findReferences` is the
+  If the server doesn't support call hierarchy, `findReferences` is the
   fallback (less precise: it doesn't group by calling function, and does
-  count non-executable mentions). Watch the first query right after the
+  count non-executable mentions); with no LSP server for the language, drop
+  to the `agent-harness.md` §4 tiers. Watch the first query right after the
   server starts: it can return incomplete results (not empty — that's the
   deceptive case) while it finishes indexing the workspace; if the count
   looks low for a symbol you know is used across several modules, repeat the
